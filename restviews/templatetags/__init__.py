@@ -1,0 +1,2 @@
+""" Django RestViews Templatetags package """
+
