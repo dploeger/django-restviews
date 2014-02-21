@@ -14,7 +14,7 @@
  * @constructor
  */
 
-var GridViewModel = function (url) {
+var RestViewsGridViewModel = function (url) {
 
     this.url = url;
     this.headers = ko.observableArray();
@@ -39,7 +39,7 @@ var GridViewModel = function (url) {
  * @param callback  Callback to call with results
  */
 
-GridViewModel.prototype.getOptions = function (url, callback) {
+RestViewsGridViewModel.prototype.getOptions = function (url, callback) {
 
     $.ajax(
         this.url,
@@ -109,7 +109,7 @@ GridViewModel.prototype.getOptions = function (url, callback) {
  * analyzing the output.
  */
 
-GridViewModel.prototype.loadHeaders = function () {
+RestViewsGridViewModel.prototype.loadHeaders = function () {
 
     if (this.headers().length == 0) {
 
@@ -139,7 +139,7 @@ GridViewModel.prototype.loadHeaders = function () {
  * @param options Options array
  */
 
-GridViewModel.prototype.fillHeaders = function (options) {
+RestViewsGridViewModel.prototype.fillHeaders = function (options) {
 
     // Analyze the options to fill the grid
 
@@ -176,7 +176,7 @@ GridViewModel.prototype.fillHeaders = function (options) {
  * Load the grid's rows (aka "Data")
  */
 
-GridViewModel.prototype.loadRows = function () {
+RestViewsGridViewModel.prototype.loadRows = function () {
 
     $.ajax(
         this.url,
@@ -205,7 +205,7 @@ GridViewModel.prototype.loadRows = function () {
  * @returns {boolean} Wether everything's ready to go
  */
 
-GridViewModel.prototype.allLoaded = function () {
+RestViewsGridViewModel.prototype.allLoaded = function () {
 
     return this.headersLoaded && this.rowsLoaded;
 
@@ -215,7 +215,7 @@ GridViewModel.prototype.allLoaded = function () {
  * Load the Headers and the Rows!
  */
 
-GridViewModel.prototype.loadAll = function () {
+RestViewsGridViewModel.prototype.loadAll = function () {
 
     this.loadHeaders();
     this.loadRows();
@@ -227,35 +227,430 @@ GridViewModel.prototype.loadAll = function () {
  * all grids are fully loaded.
  */
 
-function doActivateGrids() {
+function restViewsDoActivateGrids() {
 
-    $.each(gridModels, function (key, value) {
+    $.each(restViewsGridModels, function (key, value) {
 
         if (! value.allLoaded()) {
 
-            setTimeout(doActivateGrids, 1000);
+            setTimeout(restViewsDoActivateGrids, 1000);
 
             return;
 
         }
 
-        ko.applyBindings(gridModels);
+        ko.applyBindings(restViewsGridModels);
 
     });
 
 }
 
-var gridModels = {};
+/**
+ * Show the "New Item"-dialog for a grid
+ *
+ * @param gridName Name of grid
+ */
 
-var activateGrids = false;
+function restViewsNewItem(gridName) {
+
+    $("#" + gridName + "NewItem").modal();
+    $("#RestViewsNew" + gridName + " input")[0].focus();
+
+}
+
+/**
+ * Save a restviews form
+ *
+ * @param formName The name of the form
+ * @param viewModel The name of the viewmodel
+ */
+
+function restViewsSaveForm(formName, viewModel) {
+
+    var inputs = $("#" + formName + " input").toArray();
+
+    // Add textareas
+
+    inputs = inputs.concat($("#" + formName + " textarea").toArray());
+
+    var data = {};
+
+    for (var i = 0; i < inputs.length; i = i + 1) {
+
+        if (!$(inputs[i]).data("restViewsIsValid")) {
+
+            // Form is invalid. Cancel saving and do some shaking.
+
+            $("#" + formName)
+                .animate({ left: "+=50" }, 50)
+                .animate({ left: "-=50" }, 50)
+                .animate({ left: "+=50" }, 50)
+                .animate({ left: "-=50" }, 50);
+
+            return;
+
+        }
+
+        data[$(inputs[i]).data("restViewsField")] = $(inputs[i]).val();
+
+    }
+
+    var url = restViewsGridModels[viewModel].url;
+
+    $.ajax(
+        url,
+        {
+            data: ko.toJSON(data),
+            type: "POST",
+            error: function(xhr, status, error) {
+
+                alert("NOE");
+
+            },
+            success: function (data, status, xhr) {
+
+                alert("JAU");
+
+            }
+        }
+    );
+
+}
+
+/**
+ * Validate a string based on a regular expression
+ *
+ * @param value The value to check
+ * @param check The regular expression
+ * @returns {Boolean*} Wether the regular expression matches
+ */
+
+function restViewsValidate(value, check) {
+
+    return value.match(new RegExp(check, "gi"));
+
+}
+
+/**
+ * Validate a date/time-string by trying to create a Date object from it
+ *
+ * @param value The date/time string to check
+ * @param check (not used)
+ * @returns {boolean} Wether the string can be converted to a date.
+ */
+
+function restViewsValidateDateTime(value, check) {
+
+    var parsedDate = Date.parse(value);
+
+    return parsedDate instanceof Date;
+
+}
+
+/**
+ * Check a string, if it resembles an e-mail address.
+ *
+ * Based on http://www.regular-expressions.info/email.html
+ *
+ * @param value String to check
+ * @param check (not used)
+ * @returns {Boolean} Wether the value is an e-mail-address
+ */
+
+function restViewsValidateEmail(value, check) {
+
+    return restViewsValidate(
+        value,
+        "\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b"
+    )
+
+}
+
+/**
+ * Check a string, if it resembles an URL.
+ *
+ * Based on http://blog.mattheworiordan.com/post/
+ * 13174566389/url-regular-expression-for-links-with-or-without-the
+ *
+ * @param value String to check
+ * @param check (not used)
+ * @returns {Boolean} Wether the value is an URL
+ */
+
+function restViewsValidateUrl(value, check) {
+
+    return restViewsValidate(
+        value,
+        "((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]" +
+        "+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-]*)" +
+        "?\??(?:[\-\+=&;%@\.\w]*)#?(?:[\.\!\/\\\w]*))?)",
+        "gi"
+    );
+
+}
+
+// Custom Knockout binding handlers
+
+ko.bindingHandlers.restViewsLabel = {
+    init: function(
+        element,
+        valueAccessor,
+        allBindings,
+        viewModel,
+        bindingContext
+        ) {
+
+        element.setAttribute(
+            "for",
+            "RestViews" + valueAccessor() + "New" + bindingContext.$data.label
+        );
+
+    },
+
+    update: function(
+        element,
+        valueAccessor,
+        allBindings,
+        viewModel,
+        bindingContext
+        ) {
+
+        element.setAttribute(
+            "for",
+            "RestViews" + valueAccessor() + "New" + bindingContext.$data.label
+        );
+
+        var label = bindingContext.$data.label;
+
+        if (bindingContext.$data.required) {
+
+            label = "*" + label;
+        }
+
+        $(element).html(label);
+
+    }
+};
+
+ko.bindingHandlers.restViewsInput = {
+    update: function(
+        element,
+        valueAccessor,
+        allBindings,
+        viewModel,
+        bindingContext
+        ) {
+
+        var el = $(element);
+
+        el.attr(
+            "id",
+            "RestViews" + valueAccessor() + "New" + bindingContext.$data.label
+        );
+
+        var type = bindingContext.$data.type;
+
+        el.data(
+            "restViewsValidationFunction",
+            "restViewsValidate"
+        );
+
+        el.data(
+            "restViewsValidationString",
+            ".*"
+        );
+
+        el.data(
+            "restViewsField",
+            bindingContext.$data["_field"]
+        );
+
+        el.attr(
+            "type",
+            "text"
+        );
+
+        el.data(
+            "restViewsRequired",
+            bindingContext.$data.required
+        );
+
+        if (bindingContext.$data.required) {
+
+            // Assign error class to a required input
+
+            el.parent().parent().addClass("has-error");
+
+            el.data(
+                "restViewsIsValid",
+                false
+            );
+
+        } else {
+
+            el.data(
+                "restViewsIsValid",
+                true
+            );
+
+        }
+
+        switch (type) {
+
+            case "number":
+                el.attr(
+                    "type",
+                    "number"
+                );
+                el.data(
+                    "restViewsValidationString",
+                    "[0-9]*"
+                );
+                break;
+
+            case "float":
+                el.attr(
+                    "type",
+                    "number"
+                );
+                el.data(
+                    "data-restViewsValidationString",
+                    "[0-9,.]*"
+                );
+                break;
+
+            case "password":
+                el.attr(
+                    "type",
+                    "password"
+                );
+                break;
+
+            case "datetime":
+                el.attr(
+                    "type",
+                    "datetime"
+                );
+                el.data(
+                    "restViewsValidationFunction",
+                    "restViewsValidateDateTime"
+                );
+                break;
+
+            case "email":
+                el.attr(
+                    "type",
+                    "email"
+                );
+                el.data(
+                    "restViewsValidationFunction",
+                    "restViewsValidateEmail"
+                );
+                break;
+
+            case "url":
+                el.attr(
+                     "type",
+                     "url"
+                );
+                el.data(
+                    "restViewsValidationFunction",
+                    "restViewsValidateUrl"
+                );
+                break;
+
+            case "color":
+                el.attr(
+                    "type",
+                    "color"
+                );
+                el.data(
+                    "restViewsValidationFunction",
+                    "^#[0-9]{6}"
+                );
+                break;
+
+            default:
+                break;
+
+        }
+
+        var validateHandler = function(ev) {
+
+            var el = $(ev.target);
+
+            var value = el.val();
+
+            var validationFunction = el.data(
+                "restViewsValidationFunction"
+            );
+            var validationString = el.data(
+                "restViewsValidationString"
+            );
+
+            var formGroup = $(ev.target.parentNode.parentNode);
+
+            if (formGroup.hasClass("has-error")) {
+
+                formGroup.removeClass("has-error");
+
+            }
+
+            if (formGroup.hasClass("has-success")) {
+
+                formGroup.removeClass("has-success");
+
+            }
+
+            var validated;
+
+            if (
+                (el.data("restViewsRequired")) &&
+                (value == "")
+            ) {
+
+                validated = false;
+
+            } else {
+
+                validated = window[validationFunction](value, validationString);
+
+            }
+
+            el.data(
+                "restViewsIsValid",
+                validated
+            );
+
+            if (validated) {
+
+                formGroup.addClass("has-success");
+
+            } else {
+
+                formGroup.addClass("has-error");
+
+            }
+
+        }
+
+        el.change(validateHandler);
+        el.keyup(validateHandler);
+
+    }
+};
+
+var restViewsGridModels = {};
+
+var restViewsActivateGrids = false;
 
 // Activate the grids, once the document is loaded
 
 $( document ).ready(function() {
 
-    if (activateGrids) {
+    if (restViewsActivateGrids) {
 
-        doActivateGrids();
+        restViewsDoActivateGrids();
 
     }
 

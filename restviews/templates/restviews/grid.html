@@ -1,0 +1,148 @@
+{% load i18n %}
+<div class="row" data-bind="with: {{ grid }}">
+    <table class="table">
+        <thead>
+        <tr>
+
+            <!-- ko foreach: headers -->
+
+            <th data-bind="text: label">
+            </th>
+
+            <!-- /ko -->
+
+            <th>
+                        <span data-bind="if: canCreate">
+                            <button type="button"
+                                    class="btn btn-primary pull-right"
+                                    onclick="restViewsNewItem('{{ grid }}')">
+                                <span class="glyphicon glyphicon-plus"></span>
+                            </button>
+                        </span>
+            </th>
+
+        </tr>
+        </thead>
+        <tbody data-bind="foreach: rows">
+        <tr>
+
+            <!-- ko foreach: $parent.headers -->
+
+            <td style="white-space: pre-wrap"
+                data-bind="text: $parent[_field]">
+            </td>
+
+            <!-- /ko -->
+
+            <td>
+            </td>
+
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div id="{{ grid }}NewItem" class="modal" data-bind="with: {{ grid }}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-hidden="true">&times;</button>
+                <h4 class="modal-title">{% trans "Create new item" %}</h4>
+            </div>
+            <div class="modal-body">
+                <form id="RestViewsNew{{ grid }}"
+                      class="form-horizontal"
+                      role="form"
+                    >
+                    <div class="container">
+                    <!-- ko foreach: headers -->
+                    <div class="form-group">
+                        <label
+                            data-bind="restViewsLabel: '{{ grid }}'"
+                            class="col-sm-2 control-label">
+                        </label>
+                        <div class="col-sm-10">
+                            <!-- ko if: type == "text" -->
+                            <textarea
+                                data-bind="restViewsInput: '{{ grid }}'"
+                                class="form-control"></textarea>
+                            <!-- /ko -->
+                            <!-- ko ifnot: type == "text" -->
+                            <input data-bind="restViewsInput: '{{ grid }}'"
+                                   class="form-control">
+                            <!-- /ko -->
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                    </div>
+                </form>
+                <em class="pull-right">{% trans "* - required" %}</em>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default"
+                        data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button"
+                        onclick="
+                            restViewsSaveForm(
+                                '{{ grid }}NewItem',
+                                '{{ grid }}'
+                            )"
+                        class="btn btn-primary">
+                    {% trans "Save" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var {{ grid }}Model = new RestViewsGridViewModel('{{ url }}');
+
+    {{ grid }}Model.hideColumns = "{{ hide_columns }}".split(",");
+
+    if ("{{ columns }}" != "") {
+
+        columns = "{{ columns }}".split(",")
+
+        headers = [];
+
+        $.each(columns, function (index,value) {
+
+            tmp = value.split(":");
+
+            var required = false;
+
+            if (3 <= tmp.length - 1) {
+
+                if (tmp[3] == "1") {
+
+                    required = true;
+
+                }
+
+            }
+
+            headers.push({
+
+                "_field": tmp[0],
+                "label": tmp[1],
+                "type": tmp[2],
+                "required": required
+
+            });
+
+        });
+
+    {{ grid }}Model.headers = ko.observableArray(headers);
+
+    }
+
+    {{ grid }}Model.loadAll();
+
+    restViewsGridModels['{{ grid }}'] = {{ grid }}Model;
+
+    restViewsActivateGrids = true;
+
+</script>
