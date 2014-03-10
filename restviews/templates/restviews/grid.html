@@ -1,10 +1,16 @@
 {% load i18n %}
+
+{# The grid #}
+
 <div class="row" data-bind="with: {{ grid }}">
+    <div class="hidden alert"
+         id="{{ grid }}Alert">
+    </div>
     <table class="table">
         <thead>
         <tr>
 
-            <!-- ko foreach: headers -->
+            <!-- ko foreach: fields -->
 
             <th data-bind="text: label">
             </th>
@@ -23,10 +29,10 @@
 
         </tr>
         </thead>
-        <tbody data-bind="foreach: rows">
+        <tbody data-bind="foreach: data">
         <tr>
 
-            <!-- ko foreach: $parent.headers -->
+            <!-- ko foreach: $parent.fields -->
 
             <td style="white-space: pre-wrap"
                 data-bind="text: $parent[_field]">
@@ -40,7 +46,48 @@
         </tr>
         </tbody>
     </table>
+    <ul class="pagination pull-right">
+        <li
+            data-bind="css: { 'disabled':(currentPage() == 1) }">
+            <a href="#" onclick="restViewsLoadPage(this)"
+                data-bind="
+                    attr: {
+                       'data-page': (currentPage() - 1),
+                       'data-viewmodel': '{{ grid }}'
+                    }
+                ">
+                &laquo;
+            </a>
+        </li>
+        <!-- ko foreach: pageRange -->
+        <li data-bind="css: {'active': ($parent.currentPage() == $data)}">
+            <a href="#" onclick="restViewsLoadPage(this)"
+                data-bind="
+                    text: $data,
+                    attr: {
+                        'data-page': $data,
+                        'data-viewmodel': '{{ grid }}'
+                    }
+                ">
+               </a>
+        </li>
+        <!-- /ko -->
+        <li
+            data-bind="css: { 'disabled': (currentPage() + 1 > maxPages()) }">
+            <a href="#" onclick="restViewsLoadPage(this)"
+                data-bind="
+                    attr: {
+                        'data-page': (currentPage() + 1),
+                        'data-viewmodel': '{{ grid }}'
+                    }
+                ">
+                &raquo;
+            </a>
+        </li>
+    </ul>
 </div>
+
+{# New item form #}
 
 <div id="{{ grid }}NewItem" class="modal" data-bind="with: {{ grid }}">
     <div class="modal-dialog">
@@ -51,12 +98,17 @@
                 <h4 class="modal-title">{% trans "Create new item" %}</h4>
             </div>
             <div class="modal-body">
+
+                <div class="hidden alert"
+                     id="{{ grid }}NewItemAlert">
+                 </div>
+
                 <form id="RestViewsNew{{ grid }}"
                       class="form-horizontal"
                       role="form"
                     >
                     <div class="container">
-                    <!-- ko foreach: headers -->
+                    <!-- ko foreach: fields -->
                     <div class="form-group">
                         <label
                             data-bind="restViewsLabel: '{{ grid }}'"
@@ -66,10 +118,12 @@
                             <!-- ko if: type == "text" -->
                             <textarea
                                 data-bind="restViewsInput: '{{ grid }}'"
-                                class="form-control"></textarea>
+                                class="form-control"
+                                ></textarea>
                             <!-- /ko -->
                             <!-- ko ifnot: type == "text" -->
-                            <input data-bind="restViewsInput: '{{ grid }}'"
+                            <input
+                                data-bind="restViewsInput: '{{ grid }}'"
                                    class="form-control">
                             <!-- /ko -->
                         </div>
@@ -98,17 +152,27 @@
 
 <script type="text/javascript">
 
-    var {{ grid }}Model = new RestViewsGridViewModel('{{ url }}');
+    var {{ grid }}Model = new RestViewsGridViewModel(
+        '{{ url }}',
+        '{{ grid }}'
+    );
 
-    {{ grid }}Model.hideColumns = "{{ hide_columns }}".split(",");
+    {{ grid }}Model.hideFields = "{{ hideFields }}".split(",");
 
-    if ("{{ columns }}" != "") {
+    {{ grid }}Model.paginationEnabled = {{ paginationEnabled }};
+    {{ grid }}Model.itemsPerPage = "{{ itemsPerPage }}";
+    {{ grid }}Model.maxPages({{ maxPages }});
+    {{ grid }}Model.currentPage({{ currentPage }});
+    {{ grid }}Model.paginateByParam = "{{ paginateByParam }}";
+    {{ grid }}Model.pageParam = "{{ pageParam }}";
 
-        columns = "{{ columns }}".split(",")
+    if ("{{ fields }}" != "") {
 
-        headers = [];
+        fields = "{{ fields }}".split(",")
 
-        $.each(columns, function (index,value) {
+        tmpfields = [];
+
+        $.each(fields, function (index,value) {
 
             tmp = value.split(":");
 
@@ -124,18 +188,27 @@
 
             }
 
-            headers.push({
+            var fieldDefault = null;
+
+            if (4 <= tmp.length - 1) {
+
+                fieldDefault = tmp[4];
+
+            }
+
+            tmpfields.push({
 
                 "_field": tmp[0],
                 "label": tmp[1],
                 "type": tmp[2],
-                "required": required
+                "required": required,
+                "default": fieldDefault
 
             });
 
         });
 
-    {{ grid }}Model.headers = ko.observableArray(headers);
+        {{ grid }}Model.fields = tmpfields;
 
     }
 

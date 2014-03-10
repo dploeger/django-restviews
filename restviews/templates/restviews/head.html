@@ -1,3 +1,4 @@
+{% load i18n %}
 <!-- Call Knockout -->
 
 <script src="{{ knockout_url }}"></script>
@@ -5,3 +6,17 @@
 <!-- Include Restviews.js -->
 
 <script src="{{ restviews_url }}"></script>
+
+<!-- Include translation -->
+
+<script type="text/javascript">
+
+    restViewsTranslation = {
+
+        "SaveError": '{% trans "Error saving data." %}',
+        "LoadError": '{% trans "Error loading data." %}',
+        "Retry": '{% trans "Retry" %}'
+
+    };
+
+</script>

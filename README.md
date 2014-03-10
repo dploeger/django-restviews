@@ -20,12 +20,12 @@ your API.
 
 However, this is only possible for logged in users and not very specific.
 It's better to specify the columns in your template call to restviews_grid
-with the "columns"-parameter.
+with the "fields"-parameter.
 
-The columns-parameter expects a string containing column definitions,
+The fields-parameter expects a string containing field definitions,
 separated by a comma (",").
 
-One column definition is three parameters separated by a colon (":"). These
+One field definition is three parameters separated by a colon (":"). These
 three parameters are:
 
 * field id from your model
@@ -33,7 +33,7 @@ three parameters are:
 * Column type
 * a "1" if this field is required
 
-The following column types are supported. They have a fitting presentation for
+The following field types are supported. They have a fitting presentation for
 the user and are validated.
 
 * string - A one line string (a type="text" when thinking in HTML-input-fields)

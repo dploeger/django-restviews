@@ -11,23 +11,59 @@
  * A Model for Rest GridViews.
  *
  * @param url The URL to the REST-API
+ * @param gridModel The name of the instance
+ * @property {String} url URL to REST-backend
+ * @property {String} gridModel The name of the instance
+ * @property {ko.observableArray} fields Fields of the GridView
+ * @property {ko.observableArray} data The actual data of the Gridview
+ * @property {boolean} fieldsLoaded Are the fields available?
+ * @property {boolean} dataLoaded Is the data available?
+ * @property {boolean} environmentInterpret Has environment interpretation
+ *  taken place
+ * @property {Array} hideFields Should some fields be hidden?
+ * @property {boolean} canCreate can the user create objects?
+ * @property {boolean} canUpdate can the user update objects?
+ * @property {boolean} canDelete can the user delete objects?
+ * @property {boolean} canView can the user view objects?
+ * @property {object}  actions available actions (from OPTIONS call)
+ * @property {boolean} optionsLoaded has the OPTIONS call been made?
+ * @property {String}  csrftoken The current CSRF token from the cookies
+ * @property {boolean} paginationEnabled Enable pagination feature?
+ * @property {int} itemsPerPage Number of items per Page
+ * @property {int} maxPages Maximum count of pages
+ * @property {int} currentPage Current page to display
+ * @property {String} paginateByParam URL parameter for "itemsPerPage"
+ * @property {String} pageParam URL parameter for "currentPage"
+ * @property {ko.observableArra} pageRange A range of valid pages
  * @constructor
  */
 
-var RestViewsGridViewModel = function (url) {
+var RestViewsGridViewModel = function (url, gridModel) {
 
     this.url = url;
-    this.headers = ko.observableArray();
-    this.rows = ko.observableArray();
-    this.headersLoaded = false;
-    this.rowsLoaded = false;
-    this.hideColumns = [];
+    this.gridModel = gridModel;
+
+    this.fields = ko.observableArray();
+    this.data = ko.observableArray();
+    this.fieldsLoaded = false;
+    this.dataLoaded = false;
+    this.environmentInterpreted = false;
+    this.hideFields = [];
     this.canCreate = false;
-    this.canModify = false;
+    this.canUpdate = false;
     this.canDelete = false;
     this.canView = false;
-    this.fields = {};
+    this.actions = {};
     this.optionsLoaded = false;
+    this.csrftoken = "";
+
+    this.paginationEnabled = false;
+    this.itemsPerPage = 0;
+    this.maxPages = ko.observable(0);
+    this.currentPage = ko.observable(0);
+    this.paginateByParam = "";
+    this.pageParam = "";
+    this.pageRange = ko.observableArray();
 
 };
 
@@ -50,7 +86,7 @@ RestViewsGridViewModel.prototype.getOptions = function (url, callback) {
                 var retval = {
 
                     canCreate: false,
-                    canModify: false,
+                    canUpdate: false,
                     canDelete: false,
                     canView: false,
                     fields: {}
@@ -69,7 +105,7 @@ RestViewsGridViewModel.prototype.getOptions = function (url, callback) {
 
                 if ($.inArray("PUT", methods) != -1) {
 
-                    retval["canModify"] = this.canModify = true;
+                    retval["canUpdate"] = this.canUpdate = true;
 
                 }
 
@@ -85,11 +121,11 @@ RestViewsGridViewModel.prototype.getOptions = function (url, callback) {
 
                 }
 
-                retval["fields"] = this.fields = data.actions;
+                retval["actions"] = this.actions = data.actions;
 
-                if (callback === undefined) {
+                if (callback !== undefined) {
 
-
+                    callback.apply();
 
                 }
 
@@ -105,15 +141,15 @@ RestViewsGridViewModel.prototype.getOptions = function (url, callback) {
 };
 
 /**
- * Try to load grid columns by calling the URL using the OPTIONS method and
+ * Try to load grid fields by calling the URL using the OPTIONS method and
  * analyzing the output.
  */
 
-RestViewsGridViewModel.prototype.loadHeaders = function () {
+RestViewsGridViewModel.prototype.loadFields = function () {
 
-    if (this.headers().length == 0) {
+    if (this.fields.length == 0) {
 
-        this.getOptions(this.url, this.fillHeaders);
+        this.getOptions(this.url, this.fillFields);
 
     } else {
 
@@ -123,9 +159,11 @@ RestViewsGridViewModel.prototype.loadHeaders = function () {
 
         }
 
-        if (!this.headersLoaded) {
+        this.interpretEnvironment();
 
-            this.headersLoaded = true;
+        if (!this.fieldsLoaded) {
+
+            this.fieldsLoaded = true;
 
         }
 
@@ -134,12 +172,12 @@ RestViewsGridViewModel.prototype.loadHeaders = function () {
 };
 
 /**
- * Fill the headers using the received OPTIONS metadata
+ * Fill the fields using the received OPTIONS metadata
  *
  * @param options Options array
  */
 
-RestViewsGridViewModel.prototype.fillHeaders = function (options) {
+RestViewsGridViewModel.prototype.fillFields = function (options) {
 
     // Analyze the options to fill the grid
 
@@ -149,7 +187,7 @@ RestViewsGridViewModel.prototype.fillHeaders = function (options) {
 
     }
 
-    var headers = [];
+    var fields = [];
 
     $.each(options["fields"]["POST"], function (key, value) {
 
@@ -160,37 +198,122 @@ RestViewsGridViewModel.prototype.fillHeaders = function (options) {
 
             value["_field"] = key;
 
-            headers.push(value);
+            fields.push(value);
 
         }
 
     });
 
-    this.headers = ko.observableArray(headers);
+    this.fields = fields;
 
-    this.headersLoaded = true;
+    this.interpretEnvironment();
+
+    this.fieldsLoaded = true;
 
 };
 
 /**
- * Load the grid's rows (aka "Data")
+ * Resets all alerts for this grid model
  */
 
-RestViewsGridViewModel.prototype.loadRows = function () {
+RestViewsGridViewModel.prototype.clearAlerts = function () {
+
+    $("#" + this.gridModel + "Alert")
+        .html("")
+        .removeClass("alert-success alert-error shown")
+        .addClass("hidden");
+
+    $("#" + this.gridModel + "NewItemAlert")
+        .html("")
+        .removeClass("alert-success alert-error shown")
+        .addClass("hidden");
+};
+
+/**
+ * Load the grid's data
+ */
+
+RestViewsGridViewModel.prototype.loadData = function () {
+
+    var url = this.url;
+
+    // Clear Alerts
+
+    this.clearAlerts();
+
+    if (this.paginationEnabled) {
+
+        if (url.match(/\?/)) {
+
+            url += "&";
+
+        } else {
+
+            url += "?";
+
+        }
+
+        url += this.pageParam + "=" + this.currentPage();
+        url += "&" + this.paginateByParam + "=" + this.itemsPerPage;
+
+    }
 
     $.ajax(
-        this.url,
+        url,
         {
             type: "GET",
             success: function (data, status, xhr) {
 
+                // Support pagination
+
+                if (this.paginationEnabled) {
+
+                    this.maxPages(Math.ceil(data.count / this.itemsPerPage));
+
+                    this.pageRange.removeAll();
+
+                    for (var i = 1; i <= this.maxPages(); i = i + 1) {
+
+                        this.pageRange.push(i);
+
+                    }
+
+                    data = data.results;
+
+                }
+
                 // We have the data. Simply use an observableArray to
                 // make it Knockout-compliant
 
-                this.rows = ko.observableArray(data);
+                this.data.removeAll();
 
-                this.rowsLoaded = true;
+                for (var i = 0; i < data.length; i = i + 1) {
 
+                    this.data.push(data[i]);
+
+                }
+
+                this.dataLoaded = true;
+
+
+            },
+            error: function (xhr, status, error) {
+
+                $("#" + this.gridModel + "Alert")
+                    .html(
+                        restViewsTranslation["LoadError"]
+                        + ' <a href="#" onClick="restViewsGridModels[\''
+                            + this.gridModel
+                            + '\'].loadData()">'
+                            + restViewsTranslation["Retry"]
+                            + '</a>'
+                        + "<hr />"
+                        + '<pre class="pre-scrollable">'
+                        + xhr.responseText
+                        + '</pre>'
+                    )
+                    .removeClass("alert-success alert-danger hidden")
+                    .addClass("alert-danger shown");
 
             },
             context: this
@@ -200,25 +323,52 @@ RestViewsGridViewModel.prototype.loadRows = function () {
 };
 
 /**
- * Helper function, if all headers and rows are loaded
+ * Helper function, if all fields and data are loaded
  *
  * @returns {boolean} Wether everything's ready to go
  */
 
 RestViewsGridViewModel.prototype.allLoaded = function () {
 
-    return this.headersLoaded && this.rowsLoaded;
+    return this.fieldsLoaded && this.dataLoaded && this.environmentInterpreted;
 
 }
 
 /**
- * Load the Headers and the Rows!
+ * Load the Fields and the Data!
  */
 
 RestViewsGridViewModel.prototype.loadAll = function () {
 
-    this.loadHeaders();
-    this.loadRows();
+    this.loadFields();
+    this.loadData();
+
+};
+
+/**
+ * Try to interpret some environmental settings and header options to set
+ * certain variables.
+ */
+
+RestViewsGridViewModel.prototype.interpretEnvironment = function () {
+
+    // Check for CSRFtoken. If nothing is found, deactive editing methods
+
+    var csrf = document.cookie.match(/csrftoken=([^;]*)/, document.cookie);
+
+    if (csrf) {
+
+        this.csrftoken = csrf[1];
+
+    } else {
+
+        this.canCreate = false;
+        this.canDelete = false;
+        this.canUpdate = false;
+
+    }
+
+    this.environmentInterpreted = true;
 
 };
 
@@ -255,6 +405,37 @@ function restViewsNewItem(gridName) {
 
     $("#" + gridName + "NewItem").modal();
     $("#RestViewsNew" + gridName + " input")[0].focus();
+
+}
+
+/**
+ * Clears a form and resets the default values
+ *
+ * @param formName The name of the form
+ * @param viewModel The name of the viewmodel
+ */
+
+function restViewsClearForm(formName, viewModel) {
+
+    var fields = restViewsGridModels[viewModel].fields;
+
+    for (var i = 0; i < fields.length; i = i + 1) {
+
+        var field = fields[i];
+        
+        var value = "";
+        
+        if (field["default"]) {
+            
+            value = field["default"];
+            
+        }
+
+        $("#RestViews" + viewModel + "New" + field["_field"]).val(
+            value
+        );
+
+    }
 
 }
 
@@ -302,14 +483,36 @@ function restViewsSaveForm(formName, viewModel) {
         {
             data: ko.toJSON(data),
             type: "POST",
+            headers: {
+                "X-CSRFToken": restViewsGridModels[viewModel].csrftoken
+            },
+            contentType: "application/json",
             error: function(xhr, status, error) {
 
-                alert("NOE");
+                var alert = $("#" + viewModel + "NewItemAlert");
+
+                alert
+                    .removeClass("alert-success alert-danger")
+                    .addClass("alert-danger");
+
+                alert.html(restViewsTranslation["SaveError"] +
+                    '<hr /><pre class="pre-scrollable">' +
+                    xhr.responseText +
+                    "</pre>"
+                );
+
+                alert.removeClass("hidden").addClass("shown");
 
             },
-            success: function (data, status, xhr) {
+            success: function (httpdata, status, xhr) {
 
-                alert("JAU");
+                // Update grid
+
+                restViewsGridModels[viewModel].loadData();
+
+                restViewsClearForm(formName, viewModel);
+
+                $("#" + viewModel + "NewItem").modal("hide");
 
             }
         }
@@ -322,12 +525,12 @@ function restViewsSaveForm(formName, viewModel) {
  *
  * @param value The value to check
  * @param check The regular expression
- * @returns {Boolean*} Wether the regular expression matches
+ * @returns {boolean} Wether the regular expression matches
  */
 
 function restViewsValidate(value, check) {
 
-    return value.match(new RegExp(check, "gi"));
+    return value.search(new RegExp(check, "gi"));
 
 }
 
@@ -354,7 +557,7 @@ function restViewsValidateDateTime(value, check) {
  *
  * @param value String to check
  * @param check (not used)
- * @returns {Boolean} Wether the value is an e-mail-address
+ * @returns {boolean} Wether the value is an e-mail-address
  */
 
 function restViewsValidateEmail(value, check) {
@@ -374,7 +577,7 @@ function restViewsValidateEmail(value, check) {
  *
  * @param value String to check
  * @param check (not used)
- * @returns {Boolean} Wether the value is an URL
+ * @returns {boolean} Wether the value is an URL
  */
 
 function restViewsValidateUrl(value, check) {
@@ -386,6 +589,24 @@ function restViewsValidateUrl(value, check) {
         "?\??(?:[\-\+=&;%@\.\w]*)#?(?:[\.\!\/\\\w]*))?)",
         "gi"
     );
+
+}
+
+/**
+ * Load a specified page
+ *
+ * @param link A element with page and viewmodel-data
+ */
+
+function restViewsLoadPage(link) {
+
+    link = $(link);
+
+    var pageToLoad = link.data("page");
+    var viewModel = link.data("viewmodel");
+
+    restViewsGridModels[viewModel].currentPage(pageToLoad);
+    restViewsGridModels[viewModel].loadData();
 
 }
 
@@ -445,7 +666,8 @@ ko.bindingHandlers.restViewsInput = {
 
         el.attr(
             "id",
-            "RestViews" + valueAccessor() + "New" + bindingContext.$data.label
+            "RestViews" + valueAccessor() + "New" +
+                bindingContext.$data["_field"]
         );
 
         var type = bindingContext.$data.type;
@@ -475,6 +697,22 @@ ko.bindingHandlers.restViewsInput = {
             bindingContext.$data.required
         );
 
+        if (bindingContext.$data.default) {
+
+            if (el.tagName == "textarea") {
+
+                el.html(bindingContext.$data.default);
+
+            } else {
+
+                el.val(
+                    bindingContext.$data.default
+                );
+
+            }
+
+        }
+
         if (bindingContext.$data.required) {
 
             // Assign error class to a required input
@@ -487,6 +725,8 @@ ko.bindingHandlers.restViewsInput = {
             );
 
         } else {
+
+            el.parent().parent().addClass("has-success");
 
             el.data(
                 "restViewsIsValid",
@@ -504,7 +744,7 @@ ko.bindingHandlers.restViewsInput = {
                 );
                 el.data(
                     "restViewsValidationString",
-                    "[0-9]*"
+                    "[0-9]+"
                 );
                 break;
 
@@ -614,6 +854,8 @@ ko.bindingHandlers.restViewsInput = {
             } else {
 
                 validated = window[validationFunction](value, validationString);
+
+                validated = validated != -1;
 
             }
 

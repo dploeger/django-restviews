@@ -24,24 +24,26 @@ def restviews_head():
 @register.simple_tag()
 def restviews_grid(grid, url, *args, **kwargs):
 
-    hide_columns = ""
+    configuration = {
+        "grid": grid,
+        "url": url,
+        "hideFields": "",
+        "fields": "",
+        "paginationEnabled": "false",
+        "itemsPerPage": "10",
+        "maxPages": "0",
+        "currentPage": "1",
+        "paginateByParam": "page_size",
+        "pageParam": "page"
+    }
 
-    if "hideColumns" in kwargs:
+    for field in configuration.keys():
 
-        hide_columns = kwargs["hideColumns"]
+        if field in kwargs:
 
-    columns = ""
-
-    if "columns" in kwargs:
-
-        columns = kwargs["columns"]
+            configuration[field] = kwargs[field]
 
     return render_to_string(
         "restviews/grid.html",
-        {
-            "grid": grid,
-            "url": url,
-            "hide_columns": hide_columns,
-            "columns": columns
-        }
+        configuration
     )
