@@ -6,7 +6,10 @@
     <div class="hidden alert"
          id="{{ grid }}Alert">
     </div>
-    <table class="table">
+    <table class="table" data-bind="if: canView">
+
+        {# Header #}
+
         <thead>
         <tr>
 
@@ -29,6 +32,9 @@
 
         </tr>
         </thead>
+
+        {# Data rows #}
+
         <tbody data-bind="foreach: data">
         <tr>
 
@@ -40,12 +46,37 @@
 
             <!-- /ko -->
 
+            {# Actions #}
+
             <td>
+
+                <!-- ko foreach: $parent.actions -->
+
+                <button
+                    type="button"
+                    data-bind="
+                        html: label,
+                        css: add_class,
+                        attr: {
+                            'data-caller': caller,
+                            'data-args': args,
+                            'data-item': ko.toJSON($parent,null,2)
+                        }
+                    "
+                    onclick="restViewsCarryOutAction(this)">
+
+                </button>
+
+                <!-- /ko -->
+
             </td>
 
         </tr>
         </tbody>
     </table>
+
+    {# Paginagion #}
+
     <ul class="pagination pull-right">
         <li
             data-bind="css: { 'disabled':(currentPage() == 1) }">
@@ -90,7 +121,7 @@
 {# New item form #}
 
 <div id="{{ grid }}NewItem" class="modal" data-bind="with: {{ grid }}">
-    <div class="modal-dialog">
+    <div class="modal-dialog" data-bind="if: canCreate">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal"
@@ -165,6 +196,8 @@
     {{ grid }}Model.currentPage({{ currentPage }});
     {{ grid }}Model.paginateByParam = "{{ paginateByParam }}";
     {{ grid }}Model.pageParam = "{{ pageParam }}";
+
+    {{ grid }}Model.itemId = "{{ itemId }}";
 
     if ("{{ fields }}" != "") {
 

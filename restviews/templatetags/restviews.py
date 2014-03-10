@@ -34,7 +34,8 @@ def restviews_grid(grid, url, *args, **kwargs):
         "maxPages": "0",
         "currentPage": "1",
         "paginateByParam": "page_size",
-        "pageParam": "page"
+        "pageParam": "page",
+        "itemId": "id"
     }
 
     for field in configuration.keys():

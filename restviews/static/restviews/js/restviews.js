@@ -25,9 +25,10 @@
  * @property {boolean} canUpdate can the user update objects?
  * @property {boolean} canDelete can the user delete objects?
  * @property {boolean} canView can the user view objects?
- * @property {object}  actions available actions (from OPTIONS call)
+ * @property {object} actions available row level actions
  * @property {boolean} optionsLoaded has the OPTIONS call been made?
- * @property {String}  csrftoken The current CSRF token from the cookies
+ * @property {String} csrftoken The current CSRF token from the cookies
+ * @property {String} itemId field holding the id of the item
  * @property {boolean} paginationEnabled Enable pagination feature?
  * @property {int} itemsPerPage Number of items per Page
  * @property {int} maxPages Maximum count of pages
@@ -40,6 +41,12 @@
 
 var RestViewsGridViewModel = function (url, gridModel) {
 
+    if (url.match(/\/$/)) {
+
+        url = url.substr(0, url.length - 1);
+
+    }
+
     this.url = url;
     this.gridModel = gridModel;
 
@@ -49,13 +56,14 @@ var RestViewsGridViewModel = function (url, gridModel) {
     this.dataLoaded = false;
     this.environmentInterpreted = false;
     this.hideFields = [];
-    this.canCreate = false;
-    this.canUpdate = false;
-    this.canDelete = false;
-    this.canView = false;
-    this.actions = {};
+    this.canCreate = ko.observable(false);
+    this.canUpdate = ko.observable(false);
+    this.canDelete = ko.observable(false);
+    this.canView = ko.observable(false);
+    this.actions = ko.observableArray();
     this.optionsLoaded = false;
     this.csrftoken = "";
+    this.itemId = "";
 
     this.paginationEnabled = false;
     this.itemsPerPage = 0;
@@ -99,33 +107,21 @@ RestViewsGridViewModel.prototype.getOptions = function (url, callback) {
 
                 if ($.inArray("POST", methods) != -1) {
 
-                    retval["canCreate"] = this.canCreate = true;
-
-                }
-
-                if ($.inArray("PUT", methods) != -1) {
-
-                    retval["canUpdate"] = this.canUpdate = true;
-
-                }
-
-                if ($.inArray("DELETE", methods) != -1) {
-
-                    retval["canDelete"] = this.canDelete = true;
+                    retval["canCreate"] = true;
+                    this.canCreate(true);
 
                 }
 
                 if ($.inArray("GET", methods) != -1) {
 
-                    retval["canView"] = this.canView = true;
+                    retval["canView"] = true;
+                    this.canView(true);
 
                 }
 
-                retval["actions"] = this.actions = data.actions;
-
                 if (callback !== undefined) {
 
-                    callback.apply();
+                    callback.apply(retval);
 
                 }
 
@@ -362,9 +358,22 @@ RestViewsGridViewModel.prototype.interpretEnvironment = function () {
 
     } else {
 
-        this.canCreate = false;
-        this.canDelete = false;
-        this.canUpdate = false;
+        this.canCreate(false);
+        this.canDelete(false);
+        this.canUpdate(false);
+
+    }
+
+    // Add delete action, if we can delete
+
+    if (this.canDelete) {
+
+        this.actions.push({
+            'label': '<span class="glyphicon glyphicon-remove"></span>',
+            'add_class': "close",
+            'caller': restViewsDeleteItem,
+            'args': ['_item', this.gridModel]
+        });
 
     }
 
@@ -405,6 +414,88 @@ function restViewsNewItem(gridName) {
 
     $("#" + gridName + "NewItem").modal();
     $("#RestViewsNew" + gridName + " input")[0].focus();
+
+}
+
+/**
+ * Delete an item
+ * @param item
+ */
+
+function restViewsDeleteItem(item, gridModel) {
+
+    var model = restViewsGridModels[gridModel];
+
+    var url = model.url + "/" + item[model.itemId];
+
+    $.ajax(
+        url,
+        {
+            type: "DELETE",
+            headers: {
+                "X-CSRFToken": restViewsGridModels[viewModel].csrftoken
+            },
+            contentType: "application/json",
+            error: function(xhr, status, error) {
+
+                var alert = $("#" + viewModel + "Alert");
+
+                alert
+                    .removeClass("alert-success alert-danger hidden")
+                    .addClass("alert-danger shown")
+                    .html(restViewsTranslation["DeleteError"] +
+                        '<hr /><pre class="pre-scrollable">' +
+                        xhr.responseText +
+                        "</pre>"
+                    );
+
+            },
+            success: function (httpdata, status, xhr) {
+
+                // Update grid
+
+                restViewsGridModels[viewModel].loadData();
+
+                var alert = $("#" + viewModel + "Alert");
+
+                alert
+                    .removeClass("alert-success alert-danger hidden")
+                    .addClass("alert-success shown")
+                    .html(restViewsTranslation["DeleteSuccess"]);
+
+            }
+        }
+    );
+
+
+}
+
+/**
+ * Run a item action
+ * 
+ * @param trigger The action button, that has been pushed
+ */
+
+function restViewsCarryOutAction(trigger) {
+
+    trigger = $(trigger);
+
+    var caller = trigger.data("caller");
+    var args = trigger.data("args");
+
+    // Replace "_item" with the provided item
+
+    for (var i = 0; i < args.length; i = i + 1) {
+
+        if (args[i] == "_item") {
+
+            args[i] = JSON.parse(trigger.data("item"));
+
+        }
+
+    }
+
+    caller.apply(args);
 
 }
 
