@@ -3,9 +3,9 @@
 
 <script src="{{ knockout_url }}"></script>
 
-<!-- Include Restviews.js -->
+<!-- Include jquery.hotkeys.js -->
 
-<script src="{{ restviews_url }}"></script>
+<script src="{{ jquery_hotkeys_url }}"></script>
 
 <!-- Include translation -->
 
@@ -17,8 +17,14 @@
         "LoadError": '{% trans "Error loading data." %}',
         "Retry": '{% trans "Retry" %}',
         "DeleteError": '{% trans "Error deleting item." %}',
-        "DeleteSuccess": '{% trans "Successfully deleted item." %}'
+        "DeleteSuccess": '{% trans "Successfully deleted item." %}',
+        {# Translators: The Shortcut for a new item  #}
+        "HotKeyNewItem": '{% trans "n" %}'
 
     };
 
 </script>
+
+<!-- Include Restviews.js -->
+
+<script src="{{ restviews_url }}"></script>

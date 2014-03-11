@@ -16,7 +16,8 @@ def restviews_head():
         {
             "restviews_url":
                 StaticNode.handle_simple("restviews/js/restviews.js"),
-            "knockout_url": settings.RESTVIEWS_KNOCKOUT_URL
+            "knockout_url": settings.RESTVIEWS_KNOCKOUT_URL,
+            "jquery_hotkeys_url": settings.RESTVIEWS_JQUERY_HOTKEYS_URL
         }
     )
 

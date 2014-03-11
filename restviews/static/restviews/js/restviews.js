@@ -121,7 +121,7 @@ RestViewsGridViewModel.prototype.getOptions = function (url, callback) {
 
                 if (callback !== undefined) {
 
-                    callback.apply(retval);
+                    callback.apply(this, retval);
 
                 }
 
@@ -145,13 +145,13 @@ RestViewsGridViewModel.prototype.loadFields = function () {
 
     if (this.fields.length == 0) {
 
-        this.getOptions(this.url, this.fillFields);
+        this.getOptions(this.url + "/", this.fillFields);
 
     } else {
 
         if (!this.optionsLoaded) {
 
-            this.getOptions(this.url);
+            this.getOptions(this.url + "/");
 
         }
 
@@ -231,7 +231,7 @@ RestViewsGridViewModel.prototype.clearAlerts = function () {
 
 RestViewsGridViewModel.prototype.loadData = function () {
 
-    var url = this.url;
+    var url = this.url + "/";
 
     // Clear Alerts
 
@@ -260,6 +260,8 @@ RestViewsGridViewModel.prototype.loadData = function () {
             type: "GET",
             success: function (data, status, xhr) {
 
+                var i;
+
                 // Support pagination
 
                 if (this.paginationEnabled) {
@@ -268,7 +270,7 @@ RestViewsGridViewModel.prototype.loadData = function () {
 
                     this.pageRange.removeAll();
 
-                    for (var i = 1; i <= this.maxPages(); i = i + 1) {
+                    for (i = 1; i <= this.maxPages(); i = i + 1) {
 
                         this.pageRange.push(i);
 
@@ -283,7 +285,7 @@ RestViewsGridViewModel.prototype.loadData = function () {
 
                 this.data.removeAll();
 
-                for (var i = 0; i < data.length; i = i + 1) {
+                for (i = 0; i < data.length; i = i + 1) {
 
                     this.data.push(data[i]);
 
@@ -388,19 +390,43 @@ RestViewsGridViewModel.prototype.interpretEnvironment = function () {
 
 function restViewsDoActivateGrids() {
 
-    $.each(restViewsGridModels, function (key, value) {
+    for (var key in restViewsGridModels) {
 
-        if (! value.allLoaded()) {
+        if (restViewsGridModels.hasOwnProperty(key)) {
 
-            setTimeout(restViewsDoActivateGrids, 1000);
+            if (!restViewsGridModels[key].allLoaded()) {
 
-            return;
+                setTimeout(restViewsDoActivateGrids, 1000);
+
+                return false;
+
+            }
+
+            ko.applyBindings(restViewsGridModels);
+
+            $.each(restViewsGridModels, function (key, value) {
+
+                // Bind Ctrl-Enter and Escape-hotkeys for the modals
+
+                $("#" + key + "NewItem, #" + key + "NewItem :input")
+                    .bind(
+                    "keydown.esc",
+                    "",
+                    function (ev) { $("#CancelNewItem" + key).click() }
+                )
+                    .bind(
+                    "keydown.ctrl_return",
+                    "",
+                    function (ev) { $("#SaveNewItem" + key).click() }
+                )
+
+            });
 
         }
 
-        ko.applyBindings(restViewsGridModels);
+    }
 
-    });
+    return true;
 
 }
 
@@ -495,7 +521,7 @@ function restViewsCarryOutAction(trigger) {
 
     }
 
-    caller.apply(args);
+    caller.apply(document, args);
 
 }
 
@@ -567,7 +593,7 @@ function restViewsSaveForm(formName, viewModel) {
 
     }
 
-    var url = restViewsGridModels[viewModel].url;
+    var url = restViewsGridModels[viewModel].url + "/";
 
     $.ajax(
         url,
@@ -698,6 +724,38 @@ function restViewsLoadPage(link) {
 
     restViewsGridModels[viewModel].currentPage(pageToLoad);
     restViewsGridModels[viewModel].loadData();
+
+}
+
+/**
+ * Handle shortcuts
+ *
+ * @param ev
+ */
+
+function restViewsHandleShortcut(ev) {
+
+    var action = ev.data;
+
+    if (action == "NewItem") {
+
+        if (restViewsNewItemButtons.length == 1) {
+
+            // We only have one button, so just carry out that action
+
+            restViewsNewItemButtons[0]["func"].apply(
+                document,
+                restViewsNewItemButtons[0]["args"]
+            );
+
+        }
+
+        // TODO No, multiple buttons. Show a selection menu
+
+        return false;
+    }
+
+    return true;
 
 }
 
@@ -965,7 +1023,7 @@ ko.bindingHandlers.restViewsInput = {
 
             }
 
-        }
+        };
 
         el.change(validateHandler);
         el.keyup(validateHandler);
@@ -973,7 +1031,22 @@ ko.bindingHandlers.restViewsInput = {
     }
 };
 
+// The various grid models
+
 var restViewsGridModels = {};
+
+// An array of informations with "new item" buttons, so that the hotkey can
+// act upon it.
+
+var restViewsNewItemButtons = [];
+
+// Add shortcut handler to it
+
+jQuery(document).bind(
+    "keydown." + restViewsTranslation["HotKeyNewItem"],
+    "NewItem",
+    restViewsHandleShortcut
+);
 
 var restViewsActivateGrids = false;
 

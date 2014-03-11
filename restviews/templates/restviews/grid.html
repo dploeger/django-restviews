@@ -23,6 +23,7 @@
             <th>
                         <span data-bind="if: canCreate">
                             <button type="button"
+                                    id="restViewsNewItemButton{{ grid }}"
                                     class="btn btn-primary pull-right"
                                     onclick="restViewsNewItem('{{ grid }}')">
                                 <span class="glyphicon glyphicon-plus"></span>
@@ -120,7 +121,8 @@
 
 {# New item form #}
 
-<div id="{{ grid }}NewItem" class="modal" data-bind="with: {{ grid }}">
+<div id="{{ grid }}NewItem" class="modal" tabindex="-1" role="dialog"
+     aria-labelledby="NewItem" aria-hidden="true" data-bind="with: {{ grid }}">
     <div class="modal-dialog" data-bind="if: canCreate">
         <div class="modal-content">
             <div class="modal-header">
@@ -138,7 +140,6 @@
                       class="form-horizontal"
                       role="form"
                     >
-                    <div class="container">
                     <!-- ko foreach: fields -->
                     <div class="form-group">
                         <label
@@ -160,12 +161,12 @@
                         </div>
                     </div>
                     <!-- /ko -->
-                    </div>
                 </form>
                 <em class="pull-right">{% trans "* - required" %}</em>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default"
+                        id="CancelNewItem{{ grid }}"
                         data-dismiss="modal">{% trans "Cancel" %}</button>
                 <button type="button"
                         onclick="
@@ -173,6 +174,7 @@
                                 '{{ grid }}NewItem',
                                 '{{ grid }}'
                             )"
+                        id="SaveNewItem{{ grid }}"
                         class="btn btn-primary">
                     {% trans "Save" %}
                 </button>
@@ -183,12 +185,16 @@
 
 <script type="text/javascript">
 
+    // Create the new view model
+
     var {{ grid }}Model = new RestViewsGridViewModel(
         '{{ url }}',
         '{{ grid }}'
     );
 
-    {{ grid }}Model.hideFields = "{{ hideFields }}".split(",");
+    // Set options
+
+    {{ grid }}Model.hideFields = "{{ hideFields }}".split(",");
 
     {{ grid }}Model.paginationEnabled = {{ paginationEnabled }};
     {{ grid }}Model.itemsPerPage = "{{ itemsPerPage }}";
@@ -245,9 +251,25 @@
 
     }
 
+    // Handle keyboard navigation for this grid
+
+    restViewsNewItemButtons.push({
+
+        "label": "{{ NewItemLabel }}",
+        "func": restViewsNewItem,
+        "args": ["{{ grid }}"]
+
+    });
+
+    // Load the grid
+
     {{ grid }}Model.loadAll();
 
-    restViewsGridModels['{{ grid }}'] = {{ grid }}Model;
+    // Register grid
+
+    restViewsGridModels['{{ grid }}'] = {{ grid }}Model;
+
+    // We have something to activate
 
     restViewsActivateGrids = true;
 
