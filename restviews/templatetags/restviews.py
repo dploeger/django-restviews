@@ -5,6 +5,7 @@ from django import template
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.templatetags.static import StaticNode
+from django.utils.translation import ugettext as _
 
 register = template.Library()
 
@@ -36,7 +37,10 @@ def restviews_grid(grid, url, *args, **kwargs):
         "currentPage": "1",
         "paginateByParam": "page_size",
         "pageParam": "page",
-        "itemId": "id"
+        "itemId": "id",
+        "NewItemLabel": _("New %(item)s") % {
+            "item": grid
+        }
     }
 
     for field in configuration.keys():

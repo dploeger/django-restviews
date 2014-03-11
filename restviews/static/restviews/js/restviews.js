@@ -402,29 +402,29 @@ function restViewsDoActivateGrids() {
 
             }
 
-            ko.applyBindings(restViewsGridModels);
-
-            $.each(restViewsGridModels, function (key, value) {
-
-                // Bind Ctrl-Enter and Escape-hotkeys for the modals
-
-                $("#" + key + "NewItem, #" + key + "NewItem :input")
-                    .bind(
-                    "keydown.esc",
-                    "",
-                    function (ev) { $("#CancelNewItem" + key).click() }
-                )
-                    .bind(
-                    "keydown.ctrl_return",
-                    "",
-                    function (ev) { $("#SaveNewItem" + key).click() }
-                )
-
-            });
-
         }
 
     }
+
+    ko.applyBindings(restViewsGridModels);
+
+    $.each(restViewsGridModels, function (key, value) {
+
+        // Bind Ctrl-Enter and Escape-hotkeys for the modals
+
+        $("#" + key + "NewItem, #" + key + "NewItem :input")
+            .bind(
+            "keydown.esc",
+            "",
+            function (ev) { $("#CancelNewItem" + key).click() }
+        )
+            .bind(
+            "keydown.ctrl_return",
+            "",
+            function (ev) { $("#SaveNewItem" + key).click() }
+        )
+
+    });
 
     return true;
 
@@ -751,6 +751,11 @@ function restViewsHandleShortcut(ev) {
         }
 
         // TODO No, multiple buttons. Show a selection menu
+
+        $("#RestViewsNewItemSelector")
+            .modal()
+            .find("select")
+            .focus();
 
         return false;
     }

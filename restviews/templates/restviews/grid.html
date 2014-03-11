@@ -261,6 +261,77 @@
 
     });
 
+    // Add ourselves to the "new item" selector
+
+    if ($("#RestViewsNewItemSelector").length == 0) {
+
+        // Not yet initialized. Do it!
+
+        var RestViewsFirstOption = $(document.createElement('option'))
+            .text(restViewsTranslation["SelectNewItem"]);
+
+        var RestViewsNewItemSelector = $(document.createElement('div'))
+            .addClass("modal")
+            .attr({
+                "role": "dialog",
+                "id": "RestViewsNewItemSelector"
+            })
+            .append(
+                $(document.createElement('div'))
+                    .addClass("modal-dialog")
+                    .append(
+                        $(document.createElement('div'))
+                            .addClass("modal-content")
+                            .append(
+                                $(document.createElement('div'))
+                                    .addClass("modal-body")
+                                    .append(
+                                        $(document.createElement('select'))
+                                            .addClass("form-control")
+                                            .append(
+                                                RestViewsFirstOption
+                                            )
+                                    )
+                            )
+                    )
+            );
+
+        $(document.body).append(RestViewsNewItemSelector);
+
+        $("#RestViewsNewItemSelector")
+            .find("select")
+            .on(
+                "change",
+                function (ev) {
+
+                    $("#RestViewsNewItemSelector")
+                        .modal("hide");
+
+                    var selected = $(ev.target).find(":selected");
+
+                    var gridName = selected.data("RestViewsGridName");
+
+                    selected.removeAttr("selected");
+
+                    if (gridName) {
+
+                        restViewsNewItem(gridName);
+
+                    }
+
+                }
+            );
+
+    }
+
+    $("#RestViewsNewItemSelector")
+        .find("select")
+        .append(
+            $(document.createElement('option'))
+                .text("{{ NewItemLabel }}")
+                .data("RestViewsGridName", "{{ grid }}")
+        );
+
     // Load the grid
 
     {{ grid }}Model.loadAll();
