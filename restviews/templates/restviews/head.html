@@ -7,11 +7,19 @@
 
 <script src="{{ jquery_hotkeys_url }}"></script>
 
+<!-- Include Restviews Bootstrap -->
+
+<script src="{{ restviews_url_bootstrap }}"></script>
+
 <!-- Include translation -->
 
 <script type="text/javascript">
 
-    restViewsTranslation = {
+    /**
+     * RestViews Translation strings utilizing Django's i18n infrastructure
+     */
+
+    rv.msg = {
 
         "SaveError": '{% trans "Error saving data." %}',
         "LoadError": '{% trans "Error loading data." %}',
@@ -26,6 +34,9 @@
 
 </script>
 
-<!-- Include Restviews.js -->
+<!-- Include the other RestView Javascript libraries -->
 
-<script src="{{ restviews_url }}"></script>
+<script src="{{ restviews_url_model }}"></script>
+<script src="{{ restviews_url_functions }}"></script>
+<script src="{{ restviews_url_validators }}"></script>
+<script src="{{ restviews_url_ko_bindings }}"></script>

@@ -23,9 +23,9 @@
             <th>
                         <span data-bind="if: canCreate">
                             <button type="button"
-                                    id="restViewsNewItemButton{{ grid }}"
+                                    id="rv.showNewItemDialogButton{{ grid }}"
                                     class="btn btn-primary pull-right"
-                                    onclick="restViewsNewItem('{{ grid }}')">
+                                    onclick="rv.showNewItemDialog('{{ grid }}')">
                                 <span class="glyphicon glyphicon-plus"></span>
                             </button>
                         </span>
@@ -64,7 +64,7 @@
                             'data-item': ko.toJSON($parent,null,2)
                         }
                     "
-                    onclick="restViewsCarryOutAction(this)">
+                    onclick="rv.triggerAction(this)">
 
                 </button>
 
@@ -81,11 +81,11 @@
     <ul class="pagination pull-right">
         <li
             data-bind="css: { 'disabled':(currentPage() == 1) }">
-            <a href="#" onclick="restViewsLoadPage(this)"
+            <a href="#" onclick="rv.loadPage(this)"
                 data-bind="
                     attr: {
                        'data-page': (currentPage() - 1),
-                       'data-viewmodel': '{{ grid }}'
+                       'data-grid': '{{ grid }}'
                     }
                 ">
                 &laquo;
@@ -93,12 +93,12 @@
         </li>
         <!-- ko foreach: pageRange -->
         <li data-bind="css: {'active': ($parent.currentPage() == $data)}">
-            <a href="#" onclick="restViewsLoadPage(this)"
+            <a href="#" onclick="rv.loadPage(this)"
                 data-bind="
                     text: $data,
                     attr: {
                         'data-page': $data,
-                        'data-viewmodel': '{{ grid }}'
+                        'data-grid': '{{ grid }}'
                     }
                 ">
                </a>
@@ -106,11 +106,11 @@
         <!-- /ko -->
         <li
             data-bind="css: { 'disabled': (currentPage() + 1 > maxPages()) }">
-            <a href="#" onclick="restViewsLoadPage(this)"
+            <a href="#" onclick="rv.loadPage(this)"
                 data-bind="
                     attr: {
                         'data-page': (currentPage() + 1),
-                        'data-viewmodel': '{{ grid }}'
+                        'data-grid': '{{ grid }}'
                     }
                 ">
                 &raquo;
@@ -121,7 +121,7 @@
 
 {# New item form #}
 
-<div id="{{ grid }}NewItem" class="modal" tabindex="-1" role="dialog"
+<div id="rv.{{ grid }}NewItem" class="modal" tabindex="-1" role="dialog"
      aria-labelledby="NewItem" aria-hidden="true" data-bind="with: {{ grid }}">
     <div class="modal-dialog" data-bind="if: canCreate">
         <div class="modal-content">
@@ -133,29 +133,27 @@
             <div class="modal-body">
 
                 <div class="hidden alert"
-                     id="{{ grid }}NewItemAlert">
+                     id="rv.{{ grid }}NewItemAlert">
                  </div>
 
-                <form id="RestViewsNew{{ grid }}"
-                      class="form-horizontal"
-                      role="form"
-                    >
+                <form id="rv.{{ grid }}NewItemForm" class="form-horizontal"
+                      role="form">
                     <!-- ko foreach: fields -->
                     <div class="form-group">
                         <label
-                            data-bind="restViewsLabel: '{{ grid }}'"
+                            data-bind="rvLabel: '{{ grid }}'"
                             class="col-sm-2 control-label">
                         </label>
                         <div class="col-sm-10">
                             <!-- ko if: type == "text" -->
                             <textarea
-                                data-bind="restViewsInput: '{{ grid }}'"
+                                data-bind="rvInput: '{{ grid }}'"
                                 class="form-control"
                                 ></textarea>
                             <!-- /ko -->
                             <!-- ko ifnot: type == "text" -->
                             <input
-                                data-bind="restViewsInput: '{{ grid }}'"
+                                data-bind="rvInput: '{{ grid }}'"
                                    class="form-control">
                             <!-- /ko -->
                         </div>
@@ -166,15 +164,15 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default"
-                        id="CancelNewItem{{ grid }}"
+                        id="rv.cancelNewItem{{ grid }}"
                         data-dismiss="modal">{% trans "Cancel" %}</button>
                 <button type="button"
                         onclick="
-                            restViewsSaveForm(
-                                '{{ grid }}NewItem',
+                            rv.saveForm(
+                                'rv.{{ grid }}NewItemForm',
                                 '{{ grid }}'
                             )"
-                        id="SaveNewItem{{ grid }}"
+                        id="rv.saveNewItem{{ grid }}"
                         class="btn btn-primary">
                     {% trans "Save" %}
                 </button>
@@ -185,163 +183,6 @@
 
 <script type="text/javascript">
 
-    // Create the new view model
-
-    var {{ grid }}Model = new RestViewsGridViewModel(
-        '{{ url }}',
-        '{{ grid }}'
-    );
-
-    // Set options
-
-    {{ grid }}Model.hideFields = "{{ hideFields }}".split(",");
-
-    {{ grid }}Model.paginationEnabled = {{ paginationEnabled }};
-    {{ grid }}Model.itemsPerPage = "{{ itemsPerPage }}";
-    {{ grid }}Model.maxPages({{ maxPages }});
-    {{ grid }}Model.currentPage({{ currentPage }});
-    {{ grid }}Model.paginateByParam = "{{ paginateByParam }}";
-    {{ grid }}Model.pageParam = "{{ pageParam }}";
-
-    {{ grid }}Model.itemId = "{{ itemId }}";
-
-    if ("{{ fields }}" != "") {
-
-        fields = "{{ fields }}".split(",")
-
-        tmpfields = [];
-
-        $.each(fields, function (index,value) {
-
-            tmp = value.split(":");
-
-            var required = false;
-
-            if (3 <= tmp.length - 1) {
-
-                if (tmp[3] == "1") {
-
-                    required = true;
-
-                }
-
-            }
-
-            var fieldDefault = null;
-
-            if (4 <= tmp.length - 1) {
-
-                fieldDefault = tmp[4];
-
-            }
-
-            tmpfields.push({
-
-                "_field": tmp[0],
-                "label": tmp[1],
-                "type": tmp[2],
-                "required": required,
-                "default": fieldDefault
-
-            });
-
-        });
-
-        {{ grid }}Model.fields = tmpfields;
-
-    }
-
-    // Handle keyboard navigation for this grid
-
-    restViewsNewItemButtons.push({
-
-        "label": "{{ NewItemLabel }}",
-        "func": restViewsNewItem,
-        "args": ["{{ grid }}"]
-
-    });
-
-    // Add ourselves to the "new item" selector
-
-    if ($("#RestViewsNewItemSelector").length == 0) {
-
-        // Not yet initialized. Do it!
-
-        var RestViewsFirstOption = $(document.createElement('option'))
-            .text(restViewsTranslation["SelectNewItem"]);
-
-        var RestViewsNewItemSelector = $(document.createElement('div'))
-            .addClass("modal")
-            .attr({
-                "role": "dialog",
-                "id": "RestViewsNewItemSelector"
-            })
-            .append(
-                $(document.createElement('div'))
-                    .addClass("modal-dialog")
-                    .append(
-                        $(document.createElement('div'))
-                            .addClass("modal-content")
-                            .append(
-                                $(document.createElement('div'))
-                                    .addClass("modal-body")
-                                    .append(
-                                        $(document.createElement('select'))
-                                            .addClass("form-control")
-                                            .append(
-                                                RestViewsFirstOption
-                                            )
-                                    )
-                            )
-                    )
-            );
-
-        $(document.body).append(RestViewsNewItemSelector);
-
-        $("#RestViewsNewItemSelector")
-            .find("select")
-            .on(
-                "change",
-                function (ev) {
-
-                    $("#RestViewsNewItemSelector")
-                        .modal("hide");
-
-                    var selected = $(ev.target).find(":selected");
-
-                    var gridName = selected.data("RestViewsGridName");
-
-                    selected.removeAttr("selected");
-
-                    if (gridName) {
-
-                        restViewsNewItem(gridName);
-
-                    }
-
-                }
-            );
-
-    }
-
-    $("#RestViewsNewItemSelector")
-        .find("select")
-        .append(
-            $(document.createElement('option'))
-                .text("{{ NewItemLabel }}")
-                .data("RestViewsGridName", "{{ grid }}")
-        );
-
-    // Load the grid
-
-    {{ grid }}Model.loadAll();
-
-    // Register grid
-
-    restViewsGridModels['{{ grid }}'] = {{ grid }}Model;
-
-    // We have something to activate
-
-    restViewsActivateGrids = true;
+    rv.addModel({{ params|safe }});
 
 </script>

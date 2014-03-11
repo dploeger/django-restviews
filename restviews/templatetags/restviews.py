@@ -1,5 +1,6 @@
 """ Django Restviews
 """
+import json
 
 from django import template
 from django.conf import settings
@@ -15,8 +16,21 @@ def restviews_head():
     return render_to_string(
         'restviews/head.html',
         {
-            "restviews_url":
-                StaticNode.handle_simple("restviews/js/restviews.js"),
+            "restviews_url_bootstrap": StaticNode.handle_simple(
+                "restviews/js/rvBootstrap.js"
+            ),
+            "restviews_url_model": StaticNode.handle_simple(
+                "restviews/js/rvModel.js"
+            ),
+            "restviews_url_functions": StaticNode.handle_simple(
+                "restviews/js/rvFunctions.js"
+            ),
+            "restviews_url_validators": StaticNode.handle_simple(
+                "restviews/js/rvValidators.js"
+            ),
+            "restviews_url_ko_bindings": StaticNode.handle_simple(
+                "restviews/js/rvKoBindings.js"
+            ),
             "knockout_url": settings.RESTVIEWS_KNOCKOUT_URL,
             "jquery_hotkeys_url": settings.RESTVIEWS_JQUERY_HOTKEYS_URL
         }
@@ -40,7 +54,10 @@ def restviews_grid(grid, url, *args, **kwargs):
         "itemId": "id",
         "NewItemLabel": _("New %(item)s") % {
             "item": grid
-        }
+        },
+        "canCreate": "true",
+        "canUpdate": "true",
+        "canDelete": "true"
     }
 
     for field in configuration.keys():
@@ -51,5 +68,7 @@ def restviews_grid(grid, url, *args, **kwargs):
 
     return render_to_string(
         "restviews/grid.html",
-        configuration
+        {
+            "params": json.dumps(configuration, indent=8)
+        }
     )
