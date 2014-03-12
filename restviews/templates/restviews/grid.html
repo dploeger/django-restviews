@@ -6,7 +6,7 @@
     <div class="hidden alert"
          id="{{ grid }}Alert">
     </div>
-    <table class="table" data-bind="if: canView">
+    <table class="table table-striped" data-bind="if: canView">
 
         {# Header #}
 
@@ -23,9 +23,11 @@
             <th>
                         <span data-bind="if: canCreate">
                             <button type="button"
-                                    id="rv.showNewItemDialogButton{{ grid }}"
+                                    id="rv_showNewItemDialogButton{{ grid }}"
                                     class="btn btn-primary pull-right"
-                                    onclick="rv.showNewItemDialog('{{ grid }}')">
+                                    onclick="
+                                        rv.showNewItemDialog('{{ grid }}')
+                                    ">
                                 <span class="glyphicon glyphicon-plus"></span>
                             </button>
                         </span>
@@ -80,11 +82,11 @@
 
     <ul class="pagination pull-right">
         <li
-            data-bind="css: { 'disabled':(currentPage() == 1) }">
+            data-bind="css: { 'disabled': currentPage() == 1 }">
             <a href="#" onclick="rv.loadPage(this)"
                 data-bind="
                     attr: {
-                       'data-page': (currentPage() - 1),
+                       'data-page': currentPage() - 1,
                        'data-grid': '{{ grid }}'
                     }
                 ">
@@ -92,7 +94,7 @@
             </a>
         </li>
         <!-- ko foreach: pageRange -->
-        <li data-bind="css: {'active': ($parent.currentPage() == $data)}">
+        <li data-bind="css: {'active': $parent.currentPage() == $data}">
             <a href="#" onclick="rv.loadPage(this)"
                 data-bind="
                     text: $data,
@@ -105,11 +107,11 @@
         </li>
         <!-- /ko -->
         <li
-            data-bind="css: { 'disabled': (currentPage() + 1 > maxPages()) }">
+            data-bind="css: { 'disabled': (currentPage() + 1) > maxPages() }">
             <a href="#" onclick="rv.loadPage(this)"
                 data-bind="
                     attr: {
-                        'data-page': (currentPage() + 1),
+                        'data-page': currentPage() + 1,
                         'data-grid': '{{ grid }}'
                     }
                 ">
@@ -121,7 +123,7 @@
 
 {# New item form #}
 
-<div id="rv.{{ grid }}NewItem" class="modal" tabindex="-1" role="dialog"
+<div id="rv_{{ grid }}NewItem" class="modal" tabindex="-1" role="dialog"
      aria-labelledby="NewItem" aria-hidden="true" data-bind="with: {{ grid }}">
     <div class="modal-dialog" data-bind="if: canCreate">
         <div class="modal-content">
@@ -133,10 +135,10 @@
             <div class="modal-body">
 
                 <div class="hidden alert"
-                     id="rv.{{ grid }}NewItemAlert">
+                     id="rv_{{ grid }}NewItemAlert">
                  </div>
 
-                <form id="rv.{{ grid }}NewItemForm" class="form-horizontal"
+                <form id="rv_{{ grid }}NewItemForm" class="form-horizontal"
                       role="form">
                     <!-- ko foreach: fields -->
                     <div class="form-group">
@@ -164,15 +166,15 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default"
-                        id="rv.cancelNewItem{{ grid }}"
+                        id="rv_cancelNewItem{{ grid }}"
                         data-dismiss="modal">{% trans "Cancel" %}</button>
                 <button type="button"
                         onclick="
                             rv.saveForm(
-                                'rv.{{ grid }}NewItemForm',
+                                'rv_{{ grid }}NewItemForm',
                                 '{{ grid }}'
                             )"
-                        id="rv.saveNewItem{{ grid }}"
+                        id="rv_saveNewItem{{ grid }}"
                         class="btn btn-primary">
                     {% trans "Save" %}
                 </button>
@@ -183,6 +185,6 @@
 
 <script type="text/javascript">
 
-    rv.addModel({{ params|safe }});
+    rv.addGrid({{ params|safe }});
 
 </script>

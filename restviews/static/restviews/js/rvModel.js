@@ -25,8 +25,9 @@
  * @property {int} currentPage Current page to display
  * @property {String} paginateByParam URL parameter for "itemsPerPage"
  * @property {String} pageParam URL parameter for "currentPage"
- * @property {ko.observableArra} pageRange A range of valid pages
+ * @property {ko.observableArray} pageRange A range of valid pages
  * @property {object} newItemSelector The option for the "new item selector" box
+ * @property {String} newItemLabel The label for the "new item selector box"
  * @constructor
  */
 
@@ -61,6 +62,7 @@ rv.model = function (params) {
     this.pageRange = ko.observableArray();
 
     this.newItemSelector = null;
+    this.newItemLabel = "";
 
     // Sanitize parameters
 
@@ -144,6 +146,10 @@ rv.model = function (params) {
 
                     this[param] = ko.observableArray(params[param]);
 
+                } else if (typeof this[param]() == "number") {
+
+                    this[param] = ko.observable(parseInt(params[param]));
+
                 } else {
 
                     this[param] = ko.observable(params[param]);
@@ -159,6 +165,76 @@ rv.model = function (params) {
         }
 
     }
+
+};
+
+/**
+ * Helper function, if all fields and data are loaded
+ *
+ * @returns {boolean} Wether everything's ready to go
+ */
+
+rv.model.prototype.allLoaded = function () {
+
+    return this.fieldsLoaded && this.dataLoaded && this.environmentInterpreted;
+
+}
+
+/**
+ * Resets all alerts for this grid model
+ */
+
+rv.model.prototype.clearAlerts = function () {
+
+    $("#rv." + this.grid + "Alert")
+        .html("")
+        .removeClass("alert-success alert-error shown")
+        .addClass("hidden");
+
+    $("#rv." + this.grid + "NewItemAlert")
+        .html("")
+        .removeClass("alert-success alert-error shown")
+        .addClass("hidden");
+};
+
+/**
+ * Fill the fields using the received OPTIONS metadata
+ *
+ * @param options Options array
+ */
+
+rv.model.prototype.fillFields = function (options) {
+
+    // Analyze the options to fill the grid
+
+    if (!options["canView"]) {
+
+        return;
+
+    }
+
+    var fields = [];
+
+    $.each(options["fields"]["POST"], function (key, value) {
+
+        if (
+            ($.inArray(key, this.hideColumns) == -1) &&
+                (value.hasOwnProperty("label"))
+            ) {
+
+            value["_field"] = key;
+
+            fields.push(value);
+
+        }
+
+    });
+
+    this.fields = fields;
+
+    this.interpretEnvironment();
+
+    this.fieldsLoaded = true;
 
 };
 
@@ -224,92 +300,62 @@ rv.model.prototype.getOptions = function (url, callback) {
 };
 
 /**
- * Try to load grid fields by calling the URL using the OPTIONS method and
- * analyzing the output.
+ * Try to interpret some environmental settings and header options to set
+ * certain variables.
  */
 
-rv.model.prototype.loadFields = function () {
+rv.model.prototype.interpretEnvironment = function () {
 
-    if (this.fields().length == 0) {
+    // Check for CSRFtoken. If nothing is found, deactive editing methods
 
-        this.getOptions(this.url + "/", this.fillFields);
+    var csrf = document.cookie.match(/csrftoken=([^;]*)/, document.cookie);
+
+    if (csrf) {
+
+        this.csrftoken = csrf[1];
 
     } else {
 
-        if (!this.optionsLoaded) {
-
-            this.getOptions(this.url + "/");
-
-        }
-
-        this.interpretEnvironment();
-
-        if (!this.fieldsLoaded) {
-
-            this.fieldsLoaded = true;
-
-        }
+        this.canCreate(false);
+        this.canDelete(false);
+        this.canUpdate(false);
 
     }
+
+    // Add delete action, if we can delete
+
+    if (this.canDelete()) {
+
+        this.actions.push({
+            'label': '<span class="glyphicon glyphicon-remove"></span>',
+            'add_class': "close",
+            'caller': rv.deleteItem,
+            'args': ['_item', this.grid]
+        });
+
+    }
+
+    // Remove "new item selector" option, if we cannot create an item
+
+    if (!this.canCreate()) {
+
+        this.newItemSelector.remove();
+
+    }
+
+    this.environmentInterpreted = true;
 
 };
 
 /**
- * Fill the fields using the received OPTIONS metadata
- *
- * @param options Options array
+ * Load the Fields and the Data!
  */
 
-rv.model.prototype.fillFields = function (options) {
+rv.model.prototype.loadAll = function () {
 
-    // Analyze the options to fill the grid
+    this.loadFields();
+    this.loadData();
 
-    if (!options["canView"]) {
-
-        return;
-
-    }
-
-    var fields = [];
-
-    $.each(options["fields"]["POST"], function (key, value) {
-
-        if (
-            ($.inArray(key, this.hideColumns) == -1) &&
-            (value.hasOwnProperty("label"))
-        ) {
-
-            value["_field"] = key;
-
-            fields.push(value);
-
-        }
-
-    });
-
-    this.fields = fields;
-
-    this.interpretEnvironment();
-
-    this.fieldsLoaded = true;
-
-};
-
-/**
- * Resets all alerts for this grid model
- */
-
-rv.model.prototype.clearAlerts = function () {
-
-    $("#rv." + this.grid + "Alert")
-        .html("")
-        .removeClass("alert-success alert-error shown")
-        .addClass("hidden");
-
-    $("#rv." + this.grid + "NewItemAlert")
-        .html("")
-        .removeClass("alert-success alert-error shown")
-        .addClass("hidden");
 };
 
 /**
@@ -387,15 +433,15 @@ rv.model.prototype.loadData = function () {
                 $("#" + this.grid + "Alert")
                     .html(
                         rv.msg["LoadError"]
-                        + ' <a href="#" onClick="rv.grids[\''
+                            + ' <a href="#" onClick="rv.grids[\''
                             + this.grid
                             + '\'].loadData()">'
                             + rv.msg["Retry"]
                             + '</a>'
-                        + "<hr />"
-                        + '<pre class="pre-scrollable">'
-                        + xhr.responseText
-                        + '</pre>'
+                            + "<hr />"
+                            + '<pre class="pre-scrollable">'
+                            + xhr.responseText
+                            + '</pre>'
                     )
                     .removeClass("alert-success alert-danger hidden")
                     .addClass("alert-danger shown");
@@ -408,72 +454,32 @@ rv.model.prototype.loadData = function () {
 };
 
 /**
- * Helper function, if all fields and data are loaded
- *
- * @returns {boolean} Wether everything's ready to go
+ * Try to load grid fields by calling the URL using the OPTIONS method and
+ * analyzing the output.
  */
 
-rv.model.prototype.allLoaded = function () {
+rv.model.prototype.loadFields = function () {
 
-    return this.fieldsLoaded && this.dataLoaded && this.environmentInterpreted;
+    if (this.fields().length == 0) {
 
-}
-
-/**
- * Load the Fields and the Data!
- */
-
-rv.model.prototype.loadAll = function () {
-
-    this.loadFields();
-    this.loadData();
-
-};
-
-/**
- * Try to interpret some environmental settings and header options to set
- * certain variables.
- */
-
-rv.model.prototype.interpretEnvironment = function () {
-
-    // Check for CSRFtoken. If nothing is found, deactive editing methods
-
-    var csrf = document.cookie.match(/csrftoken=([^;]*)/, document.cookie);
-
-    if (csrf) {
-
-        this.csrftoken = csrf[1];
+        this.getOptions(this.url + "/", this.fillFields);
 
     } else {
 
-        this.canCreate(false);
-        this.canDelete(false);
-        this.canUpdate(false);
+        if (!this.optionsLoaded) {
+
+            this.getOptions(this.url + "/");
+
+        }
+
+        this.interpretEnvironment();
+
+        if (!this.fieldsLoaded) {
+
+            this.fieldsLoaded = true;
+
+        }
 
     }
-
-    // Add delete action, if we can delete
-
-    if (this.canDelete()) {
-
-        this.actions.push({
-            'label': '<span class="glyphicon glyphicon-remove"></span>',
-            'add_class': "close",
-            'caller': rv.deleteItem,
-            'args': ['_item', this.grid]
-        });
-
-    }
-
-    // Remove "new item selector" option, if we cannot create an item
-
-    if (!this.canCreate()) {
-
-        this.newItemSelector.remove();
-
-    }
-
-    this.environmentInterpreted = true;
 
 };

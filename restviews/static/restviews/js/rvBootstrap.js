@@ -25,10 +25,7 @@ rv.showNewItemDialogButtons = [];
 
 $( document ).ready(function() {
 
-    var keys = [];
-    for(var k in rv.grids) keys.push(k);
-
-    if (keys.length > 0) {
+    if (!$.isEmptyObject(rv.grids)) {
 
         rv.activateGrids();
         rv.addNewItemShorcut();

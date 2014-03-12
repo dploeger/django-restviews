@@ -10,7 +10,7 @@
 
 rv.validate = function (value, check) {
 
-    return value.search(new RegExp(check, "gi"));
+    return value.match(new RegExp(check, "gi"));
 
 };
 

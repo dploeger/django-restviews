@@ -1,45 +1,8 @@
 // Custom Knockout binding handlers for RestViews
 
-ko.bindingHandlers.rvLabel = {
-    init: function(
-        element,
-        valueAccessor,
-        allBindings,
-        grid,
-        bindingContext
-        ) {
-
-        element.setAttribute(
-            "for",
-            "RestViews" + valueAccessor() + "New" + bindingContext.$data.label
-        );
-
-    },
-
-    update: function(
-        element,
-        valueAccessor,
-        allBindings,
-        grid,
-        bindingContext
-        ) {
-
-        element.setAttribute(
-            "for",
-            "RestViews" + valueAccessor() + "New" + bindingContext.$data.label
-        );
-
-        var label = bindingContext.$data.label;
-
-        if (bindingContext.$data.required) {
-
-            label = "*" + label;
-        }
-
-        $(element).html(label);
-
-    }
-};
+/**
+ * Input-field handling
+ */
 
 ko.bindingHandlers.rvInput = {
     update: function(
@@ -54,7 +17,7 @@ ko.bindingHandlers.rvInput = {
 
         el.attr(
             "id",
-            "RestViews" + valueAccessor() + "New" +
+            "rv_" + valueAccessor() + "New" +
                 bindingContext.$data["_field"]
         );
 
@@ -62,7 +25,7 @@ ko.bindingHandlers.rvInput = {
 
         el.data(
             "rv.validationFunction",
-            "rv.validate"
+            "validate"
         );
 
         el.data(
@@ -161,7 +124,7 @@ ko.bindingHandlers.rvInput = {
                 );
                 el.data(
                     "rv.validationFunction",
-                    "rv.validateDateTime"
+                    "validateDateTime"
                 );
                 break;
 
@@ -172,7 +135,7 @@ ko.bindingHandlers.rvInput = {
                 );
                 el.data(
                     "rv.validationFunction",
-                    "rv.validateEmail"
+                    "validateEmail"
                 );
                 break;
 
@@ -183,7 +146,7 @@ ko.bindingHandlers.rvInput = {
                 );
                 el.data(
                     "rv.validationFunction",
-                    "rv.validateUrl"
+                    "validateUrl"
                 );
                 break;
 
@@ -193,7 +156,7 @@ ko.bindingHandlers.rvInput = {
                     "color"
                 );
                 el.data(
-                    "rv.validationFunction",
+                    "rv.validationString",
                     "^#[0-9]{6}"
                 );
                 break;
@@ -203,69 +166,53 @@ ko.bindingHandlers.rvInput = {
 
         }
 
-        var validateHandler = function(ev) {
+        el.change(rv.validateHandler);
+        el.keyup(rv.validateHandler);
 
-            var el = $(ev.target);
+    }
+};
 
-            var value = el.val();
+/**
+ * Label generation
+ */
 
-            var validationFunction = el.data(
-                "rv.validationFunction"
-            );
-            var validationString = el.data(
-                "rv.validationString"
-            );
+ko.bindingHandlers.rvLabel = {
+    init: function(
+        element,
+        valueAccessor,
+        allBindings,
+        grid,
+        bindingContext
+        ) {
 
-            var formGroup = $(ev.target.parentNode.parentNode);
+        element.setAttribute(
+            "for",
+            "RestViews" + valueAccessor() + "New" + bindingContext.$data.label
+        );
 
-            if (formGroup.hasClass("has-error")) {
+    },
 
-                formGroup.removeClass("has-error");
+    update: function(
+        element,
+        valueAccessor,
+        allBindings,
+        grid,
+        bindingContext
+        ) {
 
-            }
+        element.setAttribute(
+            "for",
+            "RestViews" + valueAccessor() + "New" + bindingContext.$data.label
+        );
 
-            if (formGroup.hasClass("has-success")) {
+        var label = bindingContext.$data.label;
 
-                formGroup.removeClass("has-success");
+        if (bindingContext.$data.required) {
 
-            }
+            label = "*" + label;
+        }
 
-            var validated;
-
-            if (
-                (el.data("rv.required")) &&
-                    (value == "")
-                ) {
-
-                validated = false;
-
-            } else {
-
-                validated = window[validationFunction](value, validationString);
-
-                validated = validated != -1;
-
-            }
-
-            el.data(
-                "rv.isValid",
-                validated
-            );
-
-            if (validated) {
-
-                formGroup.addClass("has-success");
-
-            } else {
-
-                formGroup.addClass("has-error");
-
-            }
-
-        };
-
-        el.change(validateHandler);
-        el.keyup(validateHandler);
+        $(element).html(label);
 
     }
 };

@@ -52,7 +52,7 @@ def restviews_grid(grid, url, *args, **kwargs):
         "paginateByParam": "page_size",
         "pageParam": "page",
         "itemId": "id",
-        "NewItemLabel": _("New %(item)s") % {
+        "newItemLabel": _("New %(item)s") % {
             "item": grid
         },
         "canCreate": "true",
@@ -69,6 +69,7 @@ def restviews_grid(grid, url, *args, **kwargs):
     return render_to_string(
         "restviews/grid.html",
         {
+            "grid": configuration["grid"],
             "params": json.dumps(configuration, indent=8)
         }
     )

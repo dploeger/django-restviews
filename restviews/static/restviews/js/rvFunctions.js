@@ -1,115 +1,5 @@
 // RestView functions
 
-rv.addModel = function (params) {
-
-    var model = new rv.model(params);
-
-    rv.showNewItemDialogButtons.push(model.grid);
-
-    // Handle keyboard navigation for this grid
-
-    if ($("#rv.newItemSelector").length == 0) {
-
-        rv.createNewItemSelector();
-
-    }
-
-    // Add the grid to the "new item" selector
-
-    model.newItemSelector = $(document.createElement('option'))
-        .text("{{ NewItemLabel }}")
-        .data("RestViewsGridName", "{{ grid }}");
-
-    $("#rv.newItemSelector")
-        .find("select")
-        .append(
-            model.newItemSelector
-        );
-
-    // Load the grid
-
-    model.loadAll();
-
-    // Register grid
-
-    rv.grids[model.grid] = model;
-
-};
-
-/**
- * Create the "New item"-selection modal available through a shortcut
- */
-
-rv.createNewItemSelector = function () {
-
-    // Not yet initialized. Do it!
-
-    var RestViewsFirstOption = $(document.createElement('option'))
-        .text(rv.msg["SelectNewItem"]);
-
-    var newItemSelector = $(document.createElement('div'))
-        .addClass("modal")
-        .attr({
-            "role": "dialog",
-            "id": "rv.newItemSelector"
-        })
-        .append(
-            $(document.createElement('div'))
-                .addClass("modal-dialog")
-                .append(
-                    $(document.createElement('div'))
-                        .addClass("modal-content")
-                        .append(
-                            $(document.createElement('div'))
-                                .addClass("modal-body")
-                                .append(
-                                    $(document.createElement('select'))
-                                        .addClass("form-control")
-                                        .append(
-                                            RestViewsFirstOption
-                                        )
-                                        .bind(
-                                        "keydown.esc",
-                                        "",
-                                        function (ev) {
-
-                                            $("#rv.newItemSelector").modal("hide");
-
-                                        }
-                                    )
-                                )
-                        )
-                )
-        );
-
-    $(document.body).append(newItemSelector);
-
-    $("#rv.newItemSelector")
-        .find("select")
-        .on(
-        "change",
-        function (ev) {
-
-            $("#rv.newItemSelector")
-                .modal("hide");
-
-            var selected = $(ev.target).find(":selected");
-
-            var gridName = selected.data("RestViewsGridName");
-
-            selected.removeAttr("selected");
-
-            if (gridName) {
-
-                rv.showNewItemDialog(gridName);
-
-            }
-
-        }
-    );
-
-};
-
 /**
  * This function is called later and applies the Knockout-Bindings once
  * all grids are fully loaded.
@@ -139,17 +29,17 @@ rv.activateGrids = function () {
 
         // Bind Ctrl-Enter and Escape-hotkeys for the modals
 
-        $("#" + key + "NewItem, #" + key + "NewItem :input")
+        $("#rv_" + key + "NewItem, #rv_" + key + "NewItem :input")
             .bind(
-                "keydown.esc",
-                "",
-                function (ev) { $("#rv.cancelNewItem" + key).click() }
-            )
+            "keydown.esc",
+            "",
+            function (ev) { $("#rv_cancelNewItem" + key).click() }
+        )
             .bind(
-                "keydown.ctrl_return",
-                "",
-                function (ev) { $("#rv.saveNewItem" + key).click() }
-            )
+            "keydown.ctrl_return",
+            "",
+            function (ev) { $("#rv_saveNewItem" + key).click() }
+        )
 
     });
 
@@ -158,15 +48,166 @@ rv.activateGrids = function () {
 };
 
 /**
- * Show the "New Item"-dialog for a grid
+ * Add a new grid to the grids.
  *
- * @param gridName Name of grid
+ * @param params The parameters for the new grid.
  */
 
-rv.showNewItemDialog = function (gridName) {
+rv.addGrid = function (params) {
 
-    $("#" + gridName + "NewItem").modal();
-    $("#RestViewsNew" + gridName + " input")[0].focus();
+    var model = new rv.model(params);
+
+    rv.showNewItemDialogButtons.push(model.grid);
+
+    // Handle keyboard navigation for this grid
+
+    var $newItemSelector = $("#rv_newItemSelector");
+
+    if ($newItemSelector.length == 0) {
+
+        rv.createNewItemSelector();
+
+    }
+
+    // Add the grid to the "new item" selector
+
+    model.newItemSelector = $(document.createElement('option'))
+        .text(model.newItemLabel)
+        .data("rv.gridName", model.grid);
+
+    $newItemSelector
+        .find("select")
+        .append(
+            model.newItemSelector
+        );
+
+    // Load the grid
+
+    model.loadAll();
+
+    // Register grid
+
+    rv.grids[model.grid] = model;
+
+};
+
+/**
+ * Add a keyboard shortcut for "Add New Item"
+ */
+
+rv.addNewItemShorcut = function () {
+
+    jQuery(document).bind(
+        "keydown." + rv.msg["HotKeyNewItem"],
+        "NewItem",
+        rv.handleShortcut
+    );
+
+};
+
+/**
+ * Clears a form and resets the default values
+ *
+ * @param formName The name of the form
+ * @param grid The name of the grid
+ */
+
+rv.clearForm = function (formName, grid) {
+
+    var fields = rv.grids[grid].fields();
+
+    for (var i = 0; i < fields.length; i = i + 1) {
+
+        var field = fields[i];
+
+        var value = "";
+
+        if (field["default"]) {
+
+            value = field["default"];
+
+        }
+
+        $("#rv_" + grid + "New" + field["_field"]).val(
+            value
+        );
+
+    }
+
+};
+
+/**
+ * Create the "New item"-selection modal available through a shortcut
+ */
+
+rv.createNewItemSelector = function () {
+
+    // Not yet initialized. Do it!
+
+    var firstOption = $(document.createElement('option'))
+        .text(rv.msg["SelectNewItem"]);
+
+    var newItemSelector = $(document.createElement('div'))
+        .addClass("modal")
+        .attr({
+            "role": "dialog",
+            "id": "rv_newItemSelector"
+        })
+        .append(
+            $(document.createElement('div'))
+                .addClass("modal-dialog")
+                .append(
+                    $(document.createElement('div'))
+                        .addClass("modal-content")
+                        .append(
+                            $(document.createElement('div'))
+                                .addClass("modal-body")
+                                .append(
+                                    $(document.createElement('select'))
+                                        .addClass("form-control")
+                                        .append(
+                                            firstOption
+                                        )
+                                        .bind(
+                                            "keydown.esc",
+                                            "",
+                                            function (ev) {
+
+                                                $("#rv_newItemSelector")
+                                                    .modal("hide");
+
+                                            }
+                                        )
+                                )
+                        )
+                )
+        );
+
+    $(document.body).append(newItemSelector);
+
+    $("#rv_newItemSelector")
+        .find("select")
+        .on(
+        "change",
+        function (ev) {
+
+            $("#rv_newItemSelector")
+                .modal("hide");
+
+            var selected = $(ev.target).find(":selected");
+
+            var gridName = selected.data("rv.gridName");
+
+            selected.removeAttr("selected");
+
+            if (gridName) {
+
+                rv.showNewItemDialog(gridName);
+
+            }
+
+        }
+    );
 
 };
 
@@ -226,62 +267,64 @@ rv.deleteItem = function (item, grid) {
 };
 
 /**
- * Run an item action
+ * Handle shortcuts
  *
- * @param trigger The action button, that has been pushed
+ * @param ev
  */
 
-rv.triggerAction = function (trigger) {
+rv.handleShortcut = function (ev) {
 
-    trigger = $(trigger);
+    var action = ev.data;
 
-    var caller = trigger.data("caller");
-    var args = trigger.data("args");
+    if (action == "NewItem") {
 
-    // Replace "_item" with the provided item
+        if (rv.showNewItemDialogButtons.length == 1) {
 
-    for (var i = 0; i < args.length; i = i + 1) {
-
-        if (args[i] == "_item") {
-
-            args[i] = JSON.parse(trigger.data("item"));
+            rv.showNewItemDialog(rv.showNewItemDialogButtons[0]);
 
         }
 
+        // No, multiple buttons. Show a selection menu
+
+        $("#rv_newItemSelector")
+            .modal()
+            .find("select")
+            .focus();
+
+        return false;
     }
 
-    caller.apply(document, args);
+    return true;
 
 };
 
 /**
- * Clears a form and resets the default values
+ * Load a specified page
  *
- * @param formName The name of the form
- * @param grid The name of the grid
+ * @param link A element with page and grid-data
  */
 
-rv.clearForm = function (formName, grid) {
+rv.loadPage = function (link) {
 
-    var fields = rv.grids[grid].fields;
+    link = $(link);
 
-    for (var i = 0; i < fields.length; i = i + 1) {
+    // Reworked Because of jQuery Bug #
+    //var pageToLoad = link.data("page");
 
-        var field = fields[i];
+    var pageToLoad = parseInt(link[0].getAttribute("data-page"));
+    var grid = link.data("grid");
 
-        var value = "";
+    if (
+        (pageToLoad > rv.grids[grid].maxPages()) ||
+        (pageToLoad < 1)
+    ) {
 
-        if (field["default"]) {
-
-            value = field["default"];
-
-        }
-
-        $("#RestViews" + grid + "New" + field["_field"]).val(
-            value
-        );
+        return false;
 
     }
+
+    rv.grids[grid].currentPage(pageToLoad);
+    rv.grids[grid].loadData();
 
 };
 
@@ -335,16 +378,16 @@ rv.saveForm = function (formName, grid) {
             contentType: "application/json",
             error: function(xhr, status, error) {
 
-                var alert = $("#" + grid + "NewItemAlert");
+                var alert = $("#rv_" + grid + "NewItemAlert");
 
                 alert
                     .removeClass("alert-success alert-danger hidden")
                     .addClass("alert-danger shown")
                     .html(
                         rv.msg["SaveError"] +
-                        '<hr /><pre class="pre-scrollable">' +
-                        xhr.responseText +
-                        "</pre>"
+                            '<hr /><pre class="pre-scrollable">' +
+                            xhr.responseText +
+                            "</pre>"
                     );
 
             },
@@ -356,7 +399,7 @@ rv.saveForm = function (formName, grid) {
 
                 rv.clearForm(formName, grid);
 
-                $("#" + grid + "NewItem").modal("hide");
+                $("#rv_" + grid + "NewItem").modal("hide");
 
             }
         }
@@ -365,72 +408,108 @@ rv.saveForm = function (formName, grid) {
 };
 
 /**
- * Handle shortcuts
+ * Show the "New Item"-dialog for a grid
  *
- * @param ev
+ * @param gridName Name of grid
  */
 
-rv.handleShortcut = function (ev) {
+rv.showNewItemDialog = function (gridName) {
 
-    var action = ev.data;
+    $("#rv_" + gridName + "NewItem").modal();
+    $("#rv_" + gridName + "NewItem input")[0].focus();
 
-    if (action == "NewItem") {
+};
 
-        if (rv.showNewItemDialogButtons.length == 1) {
+/**
+ * Run an item action
+ *
+ * @param trigger The action button, that has been pushed
+ */
 
-            // We only have one button, so just carry out that action
+rv.triggerAction = function (trigger) {
 
-            rv.showNewItemDialogButtons[0]["func"].apply(
-                document,
-                rv.showNewItemDialogButtons[0]["args"]
-            );
+    trigger = $(trigger);
+
+    var caller = trigger.data("caller");
+    var args = trigger.data("args");
+
+    // Replace "_item" with the provided item
+
+    for (var i = 0; i < args.length; i = i + 1) {
+
+        if (args[i] == "_item") {
+
+            args[i] = JSON.parse(trigger.data("item"));
 
         }
 
-        // No, multiple buttons. Show a selection menu
-
-        $("#rv.newItemSelector")
-            .modal()
-            .find("select")
-            .focus();
-
-        return false;
     }
 
-    return true;
+    caller.apply(document, args);
 
 };
 
-
-
 /**
- * Add a keyboard shortcut for "Add New Item"
+ * Validation handler for input fields
+ *
+ * @param ev Validation event
  */
 
-rv.addNewItemShorcut = function () {
+rv.validateHandler = function(ev) {
 
-    jQuery(document).bind(
-        "keydown." + rv.msg["HotKeyNewItem"],
-        "NewItem",
-        rv.handleShortcut
+    var el = $(ev.target);
+
+    var value = el.val();
+
+    var validationFunction = el.data(
+        "rv.validationFunction"
+    );
+    var validationString = el.data(
+        "rv.validationString"
     );
 
-};
+    var formGroup = $(ev.target.parentNode.parentNode);
 
-/**
- * Load a specified page
- *
- * @param link A element with page and grid-data
- */
+    if (formGroup.hasClass("has-error")) {
 
-rv.loadPage = function (link) {
+        formGroup.removeClass("has-error");
 
-    link = $(link);
+    }
 
-    var pageToLoad = link.data("page");
-    var grid = link.data("grid");
+    if (formGroup.hasClass("has-success")) {
 
-    rv.grids[grid].currentPage(pageToLoad);
-    rv.grids[grid].loadData();
+        formGroup.removeClass("has-success");
+
+    }
+
+    var validated;
+
+    if (
+        (el.data("rv.required")) &&
+            (value == "")
+        ) {
+
+        validated = false;
+
+    } else {
+
+        validated = rv[validationFunction](value, validationString);
+
+    }
+
+    el.data(
+        "rv.isValid",
+        validated
+    );
+
+    if (validated) {
+
+        formGroup.addClass("has-success");
+
+    } else {
+
+        formGroup.addClass("has-error");
+
+    }
 
 };
