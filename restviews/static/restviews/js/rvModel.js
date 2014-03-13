@@ -112,6 +112,8 @@ rv.model = function (params) {
 
             }
 
+            var hidden = $.inArray(tmp[0], params.hideFields) > -1;
+
             // Add interpreted field
 
             tmpfields.push({
@@ -120,7 +122,8 @@ rv.model = function (params) {
                 "label": tmp[1],
                 "type": tmp[2],
                 "required": required,
-                "default": fieldDefault
+                "default": fieldDefault,
+                "hidden": hidden
 
             });
 
@@ -178,7 +181,7 @@ rv.model.prototype.allLoaded = function () {
 
     return this.fieldsLoaded && this.dataLoaded && this.environmentInterpreted;
 
-}
+};
 
 /**
  * Resets all alerts for this grid model
@@ -217,20 +220,19 @@ rv.model.prototype.fillFields = function (options) {
 
     $.each(options["fields"]["POST"], function (key, value) {
 
-        if (
-            ($.inArray(key, this.hideColumns) == -1) &&
-                (value.hasOwnProperty("label"))
-            ) {
+        if (!value.hasOwnProperty("label")) {
 
-            value["_field"] = key;
-
-            fields.push(value);
+            value["label"] = key;
 
         }
 
+        value["hidden"] = $.inArray(key, this.hideFields) != -1;
+
+        fields.push(value);
+
     });
 
-    this.fields = fields;
+    this.fields = ko.observableArray(fields);
 
     this.interpretEnvironment();
 
@@ -270,14 +272,14 @@ rv.model.prototype.getOptions = function (url, callback) {
 
                 if ($.inArray("POST", methods) == -1) {
 
-                    retval["canCreate"] = false;
+                    retval.canCreate = false;
                     this.canCreate(false);
 
                 }
 
                 if ($.inArray("GET", methods) == -1) {
 
-                    retval["canView"] = false;
+                    retval.canView = false;
                     this.canView(false);
 
                 }
@@ -322,15 +324,26 @@ rv.model.prototype.interpretEnvironment = function () {
 
     }
 
-    // Add delete action, if we can delete
+    // Add delete action if we can delete
 
     if (this.canDelete()) {
 
         this.actions.push({
             'label': '<span class="glyphicon glyphicon-remove"></span>',
-            'add_class': "close",
-            'caller': rv.deleteItem,
-            'args': ['_item', this.grid]
+            'addClass': 'btn-link',
+            'action': "rv.delete." + this.grid
+        });
+
+    }
+
+    // Add update action if we can update
+
+    if (this.canUpdate()) {
+
+        this.actions.push({
+            'label': '<span class="glyphicon glyphicon-edit"></span>',
+            'addClass': 'btn-link',
+            'action': "rv.update." + this.grid
         });
 
     }

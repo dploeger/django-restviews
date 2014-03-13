@@ -17,9 +17,13 @@ var rv = {};
 
 rv.grids = {};
 
-//
+// Collect multiple "new item" buttons
 
 rv.showNewItemDialogButtons = [];
+
+// Action functions
+
+rv.actionsRegistry = {};
 
 // Activate the grids, once the document is loaded
 

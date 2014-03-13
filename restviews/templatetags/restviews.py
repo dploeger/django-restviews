@@ -57,7 +57,8 @@ def restviews_grid(grid, url, *args, **kwargs):
         },
         "canCreate": "true",
         "canUpdate": "true",
-        "canDelete": "true"
+        "canDelete": "true",
+        "uiImplementation": settings.RESTVIEWS_UI_IMPLEMENTATION
     }
 
     for field in configuration.keys():
@@ -67,7 +68,7 @@ def restviews_grid(grid, url, *args, **kwargs):
             configuration[field] = kwargs[field]
 
     return render_to_string(
-        "restviews/grid.html",
+        "restviews/%s/template.html" % (configuration["uiImplementation"]),
         {
             "grid": configuration["grid"],
             "params": json.dumps(configuration, indent=8)

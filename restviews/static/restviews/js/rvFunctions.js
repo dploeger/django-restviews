@@ -7,25 +7,49 @@
 
 rv.activateGrids = function () {
 
-    for (var key in rv.grids) {
+    var notAllLoaded = $.grep(
+        rv.grids,
+        function (grid, gridName) {
+            return grid.allLoaded();
+        },
+        true
+    ).length > 0;
 
-        if (rv.grids.hasOwnProperty(key)) {
+    if (notAllLoaded) {
 
-            if (!rv.grids[key].allLoaded()) {
+        setTimeout(rv.activateGrids, 1000);
 
-                setTimeout(rv.activateGrids, 1000);
-
-                return false;
-
-            }
-
-        }
+        return false;
 
     }
 
+    // Apply grid bindings
+
     ko.applyBindings(rv.grids);
 
+    // Additional things to do for the grids
+
     $.each(rv.grids, function (key, value) {
+
+        // Register Update and delete actions
+
+        rv.registerAction(
+            "rv.update." + key,
+            rv.showUpdateItemDialog,
+            [
+                "_item",
+                key
+            ]
+        );
+
+        rv.registerAction(
+            "rv.delete." + key,
+            rv.deleteItem,
+            [
+                "_item",
+                key
+            ]
+        );
 
         // Bind Ctrl-Enter and Escape-hotkeys for the modals
 
@@ -39,6 +63,18 @@ rv.activateGrids = function () {
             "keydown.ctrl_return",
             "",
             function (ev) { $("#rv_saveNewItem" + key).click() }
+        );
+
+        $("#rv_" + key + "UpdateItem, #rv_" + key + "UpdateItem :input")
+            .bind(
+            "keydown.esc",
+            "",
+            function (ev) { $("#rv_cancelUpdateItem" + key).click() }
+        )
+            .bind(
+            "keydown.ctrl_return",
+            "",
+            function (ev) { $("#rv_saveUpdateItem" + key).click() }
         )
 
     });
@@ -308,7 +344,7 @@ rv.loadPage = function (link) {
 
     link = $(link);
 
-    // Reworked Because of jQuery Bug #
+    // Reworked Because of jQuery Bug #14884
     //var pageToLoad = link.data("page");
 
     var pageToLoad = parseInt(link[0].getAttribute("data-page"));
@@ -329,13 +365,32 @@ rv.loadPage = function (link) {
 };
 
 /**
+ * Register an action to be called from an object or global level later.
+ * (use "_item" as an argument to include the current item as an object)
+ *
+ * @param name Name of the action
+ * @param func Javascript function to be called
+ * @param args Arguments for the function
+ */
+
+rv.registerAction = function (name, func, args) {
+
+    rv.actionsRegistry[name] = {
+        "func": func,
+        "args": args
+    };
+
+};
+
+/**
  * Save a restviews form
  *
  * @param formName The name of the form
  * @param grid The name of the grid
+ * @param update Is this an update operation?
  */
 
-rv.saveForm = function (formName, grid) {
+rv.saveForm = function (formName, grid, update) {
 
     var inputs = $("#" + formName + " input").toArray();
 
@@ -366,21 +421,31 @@ rv.saveForm = function (formName, grid) {
     }
 
     var url = rv.grids[grid].url + "/";
+    var type = "POST";
+    var $alert = $("#rv_" + grid + "NewItemAlert");
+    var $modal = $("#rv_" + grid + "NewItem");
+
+    if (update) {
+
+        type = "PUT";
+        url += data[rv.grids[grid].itemId];
+        $alert = $("#rv_" + grid + "UpdateItemAlert");
+        $modal = $("#rv_" + grid + "UpdateItem")
+
+    }
 
     $.ajax(
         url,
         {
             data: ko.toJSON(data),
-            type: "POST",
+            type: type,
             headers: {
                 "X-CSRFToken": rv.grids[grid].csrftoken
             },
             contentType: "application/json",
             error: function(xhr, status, error) {
 
-                var alert = $("#rv_" + grid + "NewItemAlert");
-
-                alert
+                $alert
                     .removeClass("alert-success alert-danger hidden")
                     .addClass("alert-danger shown")
                     .html(
@@ -399,7 +464,7 @@ rv.saveForm = function (formName, grid) {
 
                 rv.clearForm(formName, grid);
 
-                $("#rv_" + grid + "NewItem").modal("hide");
+                $modal.modal("hide");
 
             }
         }
@@ -421,6 +486,29 @@ rv.showNewItemDialog = function (gridName) {
 };
 
 /**
+ * Show the "Update Item"-dialog for data
+ *
+ * @param gridName Name of grid
+ * @param data Data for the form
+ */
+
+rv.showUpdateItemDialog = function (item, gridName) {
+
+    $.each(
+        item,
+        function (key, value) {
+
+            $("#rv_" + gridName + "Update" + key).val(value);
+
+        }
+    );
+
+    $("#rv_" + gridName + "UpdateItem").modal();
+    $("#rv_" + gridName + "UpdateItem input")[0].focus();
+
+};
+
+/**
  * Run an item action
  *
  * @param trigger The action button, that has been pushed
@@ -430,8 +518,20 @@ rv.triggerAction = function (trigger) {
 
     trigger = $(trigger);
 
-    var caller = trigger.data("caller");
-    var args = trigger.data("args");
+    var action = trigger.data("action");
+
+    if (!rv.actionsRegistry[action]) {
+
+        // Action not registered
+
+        return false;
+
+    }
+
+    var caller = rv.actionsRegistry[action]["func"];
+    var originalArgs = rv.actionsRegistry[action]["args"];
+
+    var args = JSON.parse(JSON.stringify(originalArgs));
 
     // Replace "_item" with the provided item
 
@@ -439,7 +539,11 @@ rv.triggerAction = function (trigger) {
 
         if (args[i] == "_item") {
 
-            args[i] = JSON.parse(trigger.data("item"));
+            // Rewrote because auf jQuery-Bug #14884
+
+            // args[i] = trigger.data("item");
+
+            args[i] = JSON.parse(trigger[0].getAttribute("data-item"));
 
         }
 

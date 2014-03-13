@@ -17,9 +17,24 @@ ko.bindingHandlers.rvInput = {
 
         el.attr(
             "id",
-            "rv_" + valueAccessor() + "New" +
+            "rv_" + valueAccessor() + el.data("form") +
                 bindingContext.$data["_field"]
         );
+
+        el.data(
+            "rv.field",
+            bindingContext.$data["_field"]
+        );
+
+        if (bindingContext.$data.hidden) {
+
+            el.data("rv.isValid", true);
+
+            // Nothing more to do for hidden fields
+
+            return;
+
+        }
 
         var type = bindingContext.$data.type;
 
@@ -33,10 +48,7 @@ ko.bindingHandlers.rvInput = {
             ".*"
         );
 
-        el.data(
-            "rv.field",
-            bindingContext.$data["_field"]
-        );
+
 
         el.attr(
             "type",
@@ -185,9 +197,14 @@ ko.bindingHandlers.rvLabel = {
         bindingContext
         ) {
 
-        element.setAttribute(
+        var el = $(element);
+
+        el.attr(
             "for",
-            "RestViews" + valueAccessor() + "New" + bindingContext.$data.label
+            "rv_"
+                + valueAccessor()
+                + el.data("form")
+                + bindingContext.$data.label
         );
 
     },
@@ -200,9 +217,14 @@ ko.bindingHandlers.rvLabel = {
         bindingContext
         ) {
 
-        element.setAttribute(
+        var el = $(element);
+
+        el.attr(
             "for",
-            "RestViews" + valueAccessor() + "New" + bindingContext.$data.label
+            "rv_"
+                + valueAccessor()
+                + el.data("form")
+                + bindingContext.$data.label
         );
 
         var label = bindingContext.$data.label;
@@ -212,7 +234,7 @@ ko.bindingHandlers.rvLabel = {
             label = "*" + label;
         }
 
-        $(element).html(label);
+        el.html(label);
 
     }
 };

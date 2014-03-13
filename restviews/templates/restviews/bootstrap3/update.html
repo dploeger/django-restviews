@@ -1,0 +1,82 @@
+{% load i18n %}
+{# Restviews Update item based on bootstrap3 #}
+
+<div id="rv_{{ grid }}UpdateItem" class="modal" tabindex="-1" role="dialog"
+     aria-labelledby="UpdateItem" aria-hidden="true"
+     data-bind="with: {{ grid }}">
+    <div class="modal-dialog" data-bind="if: canUpdate">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-hidden="true">&times;</button>
+                <h4 class="modal-title">{% trans "Update item" %}</h4>
+            </div>
+            <div class="modal-body">
+
+                <div class="hidden alert"
+                     id="rv_{{ grid }}UpdateItemAlert">
+                </div>
+
+                <form id="rv_{{ grid }}UpdateItemForm"
+                      class="form-horizontal"
+                      role="form">
+                    <!-- ko foreach: fields -->
+
+                    <!-- ko if: hidden -->
+
+                    <input type="hidden" data-form="Update"
+                           data-bind="rvInput: '{{ grid }}'"
+                        >
+
+                    <!-- /ko -->
+
+                    <!-- ko ifnot: hidden -->
+
+                    <div class="form-group">
+                        <label
+                            data-form="Update"
+                            data-bind="rvLabel: '{{ grid }}'"
+                            class="col-sm-2 control-label">
+                        </label>
+                        <div class="col-sm-10">
+                            <!-- ko if: type == "text" -->
+                            <textarea
+                                data-form="Update"
+                                data-bind="rvInput: '{{ grid }}'"
+                                class="form-control"
+                                ></textarea>
+                            <!-- /ko -->
+                            <!-- ko ifnot: type == "text" -->
+                            <input
+                                data-form="Update"
+                                data-bind="rvInput: '{{ grid }}'"
+                                class="form-control">
+                            <!-- /ko -->
+                        </div>
+                    </div>
+
+                    <!-- /ko -->
+
+                    <!-- /ko -->
+                </form>
+                <em class="pull-right">{% trans "* - required" %}</em>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default"
+                        id="rv_cancelUpdateItem{{ grid }}"
+                        data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button"
+                        onclick="
+                            rv.saveForm(
+                            'rv_{{ grid }}UpdateItemForm',
+                            '{{ grid }}',
+                            true
+                            )"
+                        id="rv_saveUpdateItem{{ grid }}"
+                        class="btn btn-primary">
+                    {% trans "Save" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

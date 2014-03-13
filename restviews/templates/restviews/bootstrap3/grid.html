@@ -1,0 +1,135 @@
+{% load i18n %}
+{# Restviews Grid based on bootstrap3 #}
+
+<div class="row" data-bind="with: {{ grid }}">
+    <div class="hidden alert"
+         id="{{ grid }}Alert">
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" data-bind="if: canView">
+
+            {# Header #}
+
+            <thead>
+            <tr>
+
+                <!-- ko foreach: fields -->
+
+                <!-- ko ifnot: hidden -->
+
+                <th data-bind="text: label">
+                </th>
+
+                <!-- /ko -->
+
+                <!-- /ko -->
+
+                <th>
+                    <span data-bind="if: canCreate">
+                        <button type="button"
+                                id="rv_showNewItemDialogButton{{ grid }}"
+                                class="btn btn-primary btn-sm pull-right"
+                                onclick="rv.showNewItemDialog('{{ grid }}')">
+                            <span class="glyphicon glyphicon-plus">
+
+                            </span>
+                        </button>
+                    </span>
+                </th>
+
+            </tr>
+            </thead>
+
+            {# Data rows #}
+
+            <tbody data-bind="foreach: data">
+            <tr>
+
+                <!-- ko foreach: $parent.fields -->
+
+                <!-- ko ifnot: hidden -->
+
+                <td style="white-space: pre-wrap"
+                    data-bind="text: $parent[_field]">
+                </td>
+
+                <!-- /ko -->
+
+                <!-- /ko -->
+
+                {# Actions #}
+
+                <td>
+
+                    <div class="pull-right">
+
+                        <!-- ko foreach: $parent.actions -->
+
+                        <button
+                            type="button"
+                            class="btn btn-xs"
+                            data-bind="
+                                html: label,
+                                css: addClass,
+                                attr: {
+                                    'data-action': action,
+                                    'data-item': ko.toJSON($parent,null,2)
+                                }
+                            "
+                            onclick="rv.triggerAction(this)">
+
+                        </button>
+
+                        <!-- /ko -->
+
+                    </div>
+
+                </td>
+
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    {# Paginagion #}
+
+    <ul class="pagination pull-right">
+        <li
+            data-bind="css: { 'disabled': currentPage() == 1 }">
+            <a href="#" onclick="rv.loadPage(this)"
+               data-bind="
+                    attr: {
+                       'data-page': currentPage() - 1,
+                       'data-grid': '{{ grid }}'
+                    }
+                ">
+                &laquo;
+            </a>
+        </li>
+        <!-- ko foreach: pageRange -->
+        <li data-bind="css: {'active': $parent.currentPage() == $data}">
+            <a href="#" onclick="rv.loadPage(this)"
+               data-bind="
+                    text: $data,
+                    attr: {
+                        'data-page': $data,
+                        'data-grid': '{{ grid }}'
+                    }
+                ">
+            </a>
+        </li>
+        <!-- /ko -->
+        <li
+            data-bind="css: { 'disabled': (currentPage() + 1) > maxPages() }">
+            <a href="#" onclick="rv.loadPage(this)"
+               data-bind="
+                    attr: {
+                        'data-page': currentPage() + 1,
+                        'data-grid': '{{ grid }}'
+                    }
+                ">
+                &raquo;
+            </a>
+        </li>
+    </ul>
+</div>

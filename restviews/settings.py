@@ -22,3 +22,7 @@ if settings.DEBUG:
     # URL to the jquery.hotkeys library
     RESTVIEWS_JQUERY_HOTKEYS_URL = "//cdn.jsdelivr.net/jquery.hotkeys/0.8b/" \
                                    "jquery.hotkeys.js"
+
+# Restviews default UI implementation
+
+RESTVIEWS_UI_IMPLEMENTATION = "bootstrap3"

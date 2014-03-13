@@ -1,0 +1,21 @@
+{# Restviews bootstrap3 template #}
+
+{# The grid #}
+
+{% include "restviews/bootstrap3/grid.html" %}
+
+{# New item form #}
+
+{% include "restviews/bootstrap3/create.html" %}
+
+{# Update item form #}
+
+{% include "restviews/bootstrap3/update.html" %}
+
+{# Load grid #}
+
+<script type="text/javascript">
+
+    rv.addGrid({{ params|safe }});
+
+</script>
