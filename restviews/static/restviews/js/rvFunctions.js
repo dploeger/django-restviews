@@ -54,28 +54,57 @@ rv.activateGrids = function () {
         // Bind Ctrl-Enter and Escape-hotkeys for the modals
 
         $("#rv_" + key + "NewItem, #rv_" + key + "NewItem :input")
-            .bind(
+            .on(
             "keydown.esc",
-            "",
             function (ev) { $("#rv_cancelNewItem" + key).click() }
         )
-            .bind(
+            .on(
             "keydown.ctrl_return",
-            "",
             function (ev) { $("#rv_saveNewItem" + key).click() }
         );
 
         $("#rv_" + key + "UpdateItem, #rv_" + key + "UpdateItem :input")
-            .bind(
+            .on(
             "keydown.esc",
-            "",
             function (ev) { $("#rv_cancelUpdateItem" + key).click() }
         )
-            .bind(
+            .on(
             "keydown.ctrl_return",
-            "",
             function (ev) { $("#rv_saveUpdateItem" + key).click() }
-        )
+        );
+
+        // Handle searching
+
+        if (value.searchEnabled) {
+
+            $("#rv_search" + key).on(
+                "keyup",
+                function (ev) {
+                    var el = $(this);
+
+                    if (
+                        (el.val().length >= value.minSearch) ||
+                        (
+                            (value.currentSearch != "") &&
+                            (el.val().length < value.minSearch)
+                        )
+                    ) {
+
+                        value.currentSearch = el.val();
+
+                        if (el.val().length < value.minSearch) {
+
+                            value.currentSearch = "";
+
+                        }
+
+                        value.loadData();
+
+                    }
+                }
+            );
+
+        }
 
     });
 
@@ -102,6 +131,7 @@ rv.addGrid = function (params) {
     if ($newItemSelector.length == 0) {
 
         rv.createNewItemSelector();
+        $newItemSelector = $("#rv_newItemSelector");
 
     }
 
@@ -133,8 +163,9 @@ rv.addGrid = function (params) {
 
 rv.addNewItemShorcut = function () {
 
-    jQuery(document).bind(
+    jQuery(document).on(
         "keydown." + rv.msg["HotKeyNewItem"],
+        "",
         "NewItem",
         rv.handleShortcut
     );
@@ -204,9 +235,8 @@ rv.createNewItemSelector = function () {
                                         .append(
                                             firstOption
                                         )
-                                        .bind(
+                                        .on(
                                             "keydown.esc",
-                                            "",
                                             function (ev) {
 
                                                 $("#rv_newItemSelector")

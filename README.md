@@ -2,6 +2,11 @@
 
 REST-based Django CrUD-Views
 
+## Features
+
+* Supports [pagination][pagination]
+* Supports [searching][searching]
+
 ## Prerequisites
 
 Restviews is based on the following libraries:
@@ -46,3 +51,5 @@ the user and are validated.
 * url - An URL
 * color - A HTML color
 
+[pagination]: http://www.django-rest-framework.org/api-guide/pagination
+[searching]: http://www.django-rest-framework.org/api-guide/filtering#searchfilter

@@ -28,6 +28,11 @@
  * @property {ko.observableArray} pageRange A range of valid pages
  * @property {object} newItemSelector The option for the "new item selector" box
  * @property {String} newItemLabel The label for the "new item selector box"
+ * @property {int} maxPageRange How many pages to display in the pagination
+ * @property {boolean} searchEnabled Is the search feature enabled?
+ * @property {String} searchParam The argument to use in the search url
+ * @property {int} minSearch Minimum amount of characters to begin searching
+ * @property {String} currentSearch Current search string
  * @constructor
  */
 
@@ -63,6 +68,13 @@ rv.model = function (params) {
 
     this.newItemSelector = null;
     this.newItemLabel = "";
+
+    this.maxPageRange = ko.observable(0);
+
+    this.searchEnabled = false;
+    this.searchParam = "";
+    this.minSearch = 0;
+    this.currentSearch = "";
 
     // Sanitize parameters
 
@@ -161,7 +173,20 @@ rv.model = function (params) {
 
             } else {
 
-                this[param] = params[param];
+                if (typeof this[param] == "boolean") {
+
+                    this[param] = (params[param] === "true");
+
+                } else if (typeof this[param] == "number") {
+
+                    this[param] = parseInt(params[param]);
+
+                } else {
+
+                    this[param] = params[param];
+
+                }
+
 
             }
 
@@ -400,6 +425,25 @@ rv.model.prototype.loadData = function () {
 
     }
 
+    if (
+        (this.searchEnabled) &&
+        (this.currentSearch != "")
+    ) {
+
+        if (url.match(/\?/)) {
+
+            url += "&";
+
+        } else {
+
+            url += "?";
+
+        }
+
+        url += this.searchParam + "=" + this.currentSearch;
+
+    }
+
     $.ajax(
         url,
         {
@@ -416,9 +460,45 @@ rv.model.prototype.loadData = function () {
 
                     this.pageRange.removeAll();
 
-                    for (i = 1; i <= this.maxPages(); i = i + 1) {
+                    if (this.currentPage() > this.maxPageRange() - 1) {
+
+                        this.pageRange.push("...");
+
+                    }
+
+                    var start =
+                        this.currentPage()
+                            - Math.floor(this.maxPageRange() / 2);
+
+                    if (start + this.maxPageRange() > this.maxPages()) {
+
+                        start = this.maxPages()
+                            - this.maxPageRange()
+                            + 1;
+
+                    }
+
+                    if (start < 1) {
+                        start = 1;
+                    }
+
+                    var end = start + this.maxPageRange() - 1;
+
+                    if (end > this.maxPages()) {
+
+                        end = this.maxPages();
+
+                    }
+
+                    for (i = start; i <= end; i = i + 1) {
 
                         this.pageRange.push(i);
+
+                    }
+
+                    if (end < this.maxPages()) {
+
+                        this.pageRange.push("...");
 
                     }
 

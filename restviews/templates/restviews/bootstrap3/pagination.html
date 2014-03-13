@@ -1,0 +1,46 @@
+{# Paginagion #}
+
+<ul class="pagination pagination-sm" style="margin: 0px;">
+    <li
+        data-bind="css: { 'disabled': currentPage() == 1 }">
+        <a href="#" onclick="rv.loadPage(this)"
+           data-bind="
+                    attr: {
+                       'data-page': currentPage() - 1,
+                       'data-grid': '{{ grid }}'
+                    }
+                ">
+            &laquo;
+        </a>
+    </li>
+    <!-- ko foreach: pageRange -->
+    <li data-bind="
+        css: {
+            'active': $parent.currentPage() == $data,
+            'disabled': $data == '...'
+        }
+        ">
+        <a href="#" onclick="rv.loadPage(this)"
+           data-bind="
+                    text: $data,
+                    attr: {
+                        'data-page': $data,
+                        'data-grid': '{{ grid }}'
+                    }
+                ">
+        </a>
+    </li>
+    <!-- /ko -->
+    <li
+        data-bind="css: { 'disabled': (currentPage() + 1) > maxPages() }">
+        <a href="#" onclick="rv.loadPage(this)"
+           data-bind="
+                    attr: {
+                        'data-page': currentPage() + 1,
+                        'data-grid': '{{ grid }}'
+                    }
+                ">
+            &raquo;
+        </a>
+    </li>
+</ul>

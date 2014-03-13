@@ -5,6 +5,33 @@
     <div class="hidden alert"
          id="{{ grid }}Alert">
     </div>
+    <div class="row">
+        <div class="col-sm-8">
+            <span data-bind="if: searchEnabled">
+                <input type="text" class="form-control input-sm"
+                       id="rv_search{{ grid }}"
+                       data-bind="if: searchEnabled"
+                       placeholder="{% trans "Search" %}">
+            </span>
+        </div>
+        <div class="col-sm-3">
+            {# Include pagination #}
+            {% include "restviews/bootstrap3/pagination.html" %}
+        </div>
+        <div class="col-sm-1">
+            <span data-bind="if: canCreate">
+                <button type="button"
+                        id="rv_showNewItemDialogButton{{ grid }}"
+                        class="btn btn-primary btn-sm pull-right"
+                        onclick="rv.showNewItemDialog('{{ grid }}')">
+                    <span class="glyphicon glyphicon-plus">
+
+                    </span>
+                </button>
+            </span>
+        </div>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-striped table-hover" data-bind="if: canView">
 
@@ -25,16 +52,7 @@
                 <!-- /ko -->
 
                 <th>
-                    <span data-bind="if: canCreate">
-                        <button type="button"
-                                id="rv_showNewItemDialogButton{{ grid }}"
-                                class="btn btn-primary btn-sm pull-right"
-                                onclick="rv.showNewItemDialog('{{ grid }}')">
-                            <span class="glyphicon glyphicon-plus">
-
-                            </span>
-                        </button>
-                    </span>
+                    &nbsp;
                 </th>
 
             </tr>
@@ -91,45 +109,4 @@
         </table>
     </div>
 
-    {# Paginagion #}
-
-    <ul class="pagination pull-right">
-        <li
-            data-bind="css: { 'disabled': currentPage() == 1 }">
-            <a href="#" onclick="rv.loadPage(this)"
-               data-bind="
-                    attr: {
-                       'data-page': currentPage() - 1,
-                       'data-grid': '{{ grid }}'
-                    }
-                ">
-                &laquo;
-            </a>
-        </li>
-        <!-- ko foreach: pageRange -->
-        <li data-bind="css: {'active': $parent.currentPage() == $data}">
-            <a href="#" onclick="rv.loadPage(this)"
-               data-bind="
-                    text: $data,
-                    attr: {
-                        'data-page': $data,
-                        'data-grid': '{{ grid }}'
-                    }
-                ">
-            </a>
-        </li>
-        <!-- /ko -->
-        <li
-            data-bind="css: { 'disabled': (currentPage() + 1) > maxPages() }">
-            <a href="#" onclick="rv.loadPage(this)"
-               data-bind="
-                    attr: {
-                        'data-page': currentPage() + 1,
-                        'data-grid': '{{ grid }}'
-                    }
-                ">
-                &raquo;
-            </a>
-        </li>
-    </ul>
 </div>

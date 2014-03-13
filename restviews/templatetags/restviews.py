@@ -58,7 +58,11 @@ def restviews_grid(grid, url, *args, **kwargs):
         "canCreate": "true",
         "canUpdate": "true",
         "canDelete": "true",
-        "uiImplementation": settings.RESTVIEWS_UI_IMPLEMENTATION
+        "uiImplementation": settings.RESTVIEWS_UI_IMPLEMENTATION,
+        "maxPageRange": "5",
+        "searchEnabled": "false",
+        "searchParam": "search",
+        "minSearch": "3"
     }
 
     for field in configuration.keys():
