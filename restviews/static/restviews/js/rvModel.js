@@ -29,10 +29,15 @@
  * @property {object} newItemSelector The option for the "new item selector" box
  * @property {String} newItemLabel The label for the "new item selector box"
  * @property {int} maxPageRange How many pages to display in the pagination
- * @property {boolean} searchEnabled Is the search feature enabled?
+ * @property {boolean} searchingEnabled Is the search feature enabled?
  * @property {String} searchParam The argument to use in the search url
  * @property {int} minSearch Minimum amount of characters to begin searching
  * @property {String} currentSearch Current search string
+ * @property {boolean} orderingEnabled Is the order feature enabled?
+ * @property {String} orderingParam URL parameter for ordering
+ * @property {String} orderingField Field name, that is used for ordering
+ * @property {boolean} orderingAsc Ascending ordering used?
+ *
  * @constructor
  */
 
@@ -71,10 +76,15 @@ rv.model = function (params) {
 
     this.maxPageRange = ko.observable(0);
 
-    this.searchEnabled = false;
+    this.searchingEnabled = false;
     this.searchParam = "";
     this.minSearch = 0;
     this.currentSearch = "";
+
+    this.orderingEnabled = false;
+    this.orderingParam = "";
+    this.orderingField = ko.observable("");
+    this.orderingAsc = ko.observable(false);
 
     // Sanitize parameters
 
@@ -164,6 +174,10 @@ rv.model = function (params) {
                 } else if (typeof this[param]() == "number") {
 
                     this[param] = ko.observable(parseInt(params[param]));
+
+                } else if (typeof this[param]() == "boolean") {
+
+                    this[param] = ko.observable(params[param] === "true");
 
                 } else {
 
@@ -408,41 +422,52 @@ rv.model.prototype.loadData = function () {
 
     this.clearAlerts();
 
+    var request = [];
+
     if (this.paginationEnabled) {
 
-        if (url.match(/\?/)) {
-
-            url += "&";
-
-        } else {
-
-            url += "?";
-
-        }
-
-        url += this.pageParam + "=" + this.currentPage();
-        url += "&" + this.paginateByParam + "=" + this.itemsPerPage;
+        request.push(this.pageParam + "=" + this.currentPage());
+        request.push(this.paginateByParam + "=" + this.itemsPerPage);
 
     }
 
     if (
-        (this.searchEnabled) &&
+        (this.searchingEnabled) &&
         (this.currentSearch != "")
     ) {
 
-        if (url.match(/\?/)) {
+        request.push(this.searchParam + "=" + this.currentSearch);
 
-            url += "&";
+    }
 
-        } else {
+    if (
+        (this.orderingEnabled) &&
+        (this.orderingField() != "")
+    ) {
 
-            url += "?";
+        var orderingField = this.orderingField();
+
+        if (!this.orderingAsc()) {
+
+            orderingField = "-" + orderingField;
 
         }
 
-        url += this.searchParam + "=" + this.currentSearch;
+        request.push(this.orderingParam + "=" + orderingField);
 
     }
+
+    if (url.match(/\?/)) {
+
+        url += "&";
+
+    } else {
+
+        url += "?";
+
+    }
+
+    url += request.join("&");
 
     $.ajax(
         url,
@@ -561,7 +586,7 @@ rv.model.prototype.loadFields = function () {
 
         if (!this.optionsLoaded) {
 
-            this.getOptions(this.url + "/");
+            this.getOptions(this.url + "/", null);
 
         }
 

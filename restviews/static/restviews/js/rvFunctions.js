@@ -75,7 +75,7 @@ rv.activateGrids = function () {
 
         // Handle searching
 
-        if (value.searchEnabled) {
+        if (value.searchingEnabled) {
 
             $("#rv_search" + key).on(
                 "keyup",
@@ -106,6 +106,25 @@ rv.activateGrids = function () {
 
         }
 
+        // Handle ordering
+
+        if (value.orderingEnabled) {
+
+            $.each(
+                value.fields(),
+                function (fieldKey, fieldValue) {
+
+                    $("#rv_header" + key + fieldValue["_field"])
+                        .on(
+                            "click",
+                            rv.setOrdering
+                        )
+
+                }
+            );
+
+        }
+
     });
 
     return true;
@@ -120,9 +139,9 @@ rv.activateGrids = function () {
 
 rv.addGrid = function (params) {
 
-    var model = new rv.model(params);
+    var grid = new rv.model(params);
 
-    rv.showNewItemDialogButtons.push(model.grid);
+    rv.showNewItemDialogButtons.push(grid.grid);
 
     // Handle keyboard navigation for this grid
 
@@ -137,23 +156,23 @@ rv.addGrid = function (params) {
 
     // Add the grid to the "new item" selector
 
-    model.newItemSelector = $(document.createElement('option'))
-        .text(model.newItemLabel)
-        .data("rv.gridName", model.grid);
+    grid.newItemSelector = $(document.createElement('option'))
+        .text(grid.newItemLabel)
+        .data("rv.gridName", grid.grid);
 
     $newItemSelector
         .find("select")
         .append(
-            model.newItemSelector
+            grid.newItemSelector
         );
 
     // Load the grid
 
-    model.loadAll();
+    grid.loadAll();
 
     // Register grid
 
-    rv.grids[model.grid] = model;
+    rv.grids[grid.grid] = grid;
 
 };
 
@@ -392,6 +411,8 @@ rv.loadPage = function (link) {
     rv.grids[grid].currentPage(pageToLoad);
     rv.grids[grid].loadData();
 
+    return true;
+
 };
 
 /**
@@ -503,6 +524,33 @@ rv.saveForm = function (formName, grid, update) {
 };
 
 /**
+ * Set the ordering field
+ *
+ * @param ev DOM Event of the click
+ */
+
+rv.setOrdering = function (ev) {
+
+    var $el = $(ev.target);
+
+    var gridName = $el.data("gridname");
+    var fieldName = $el.data("fieldname");
+
+    if (fieldName == rv.grids[gridName].orderingField()) {
+
+        rv.grids[gridName].orderingAsc(!rv.grids[gridName].orderingAsc());
+
+    } else {
+
+        rv.grids[gridName].orderingField(fieldName);
+
+    }
+
+    rv.grids[gridName].loadData();
+
+};
+
+/**
  * Show the "New Item"-dialog for a grid
  *
  * @param gridName Name of grid
@@ -518,8 +566,8 @@ rv.showNewItemDialog = function (gridName) {
 /**
  * Show the "Update Item"-dialog for data
  *
+ * @param item Data for the form
  * @param gridName Name of grid
- * @param data Data for the form
  */
 
 rv.showUpdateItemDialog = function (item, gridName) {
@@ -580,6 +628,8 @@ rv.triggerAction = function (trigger) {
     }
 
     caller.apply(document, args);
+
+    return true;
 
 };
 

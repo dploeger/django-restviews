@@ -4,17 +4,24 @@ REST-based Django CrUD-Views
 
 ## Features
 
-* Supports [pagination][pagination]
-* Supports [searching][searching]
+* Multiple Datagrids
+* Complete CrUD (Create, Update, Delete) functionality
+* Input validation
+* [pagination][pagination]
+* [searching][searching]
+* [ordering][ordering]
 
 ## Prerequisites
 
 Restviews is based on the following libraries:
 
 * Django
-* Bootstrap 3
 * jQuery
 * knockoutJS
+
+The default user interface implementation uses
+
+* Bootstrap 3
 
 ### Creating grids
 
@@ -53,3 +60,4 @@ the user and are validated.
 
 [pagination]: http://www.django-rest-framework.org/api-guide/pagination
 [searching]: http://www.django-rest-framework.org/api-guide/filtering#searchfilter
+[ordering]: http://www.django-rest-framework.org/api-guide/filtering#orderingfilter

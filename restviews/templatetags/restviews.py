@@ -10,6 +10,7 @@ from django.utils.translation import ugettext as _
 
 register = template.Library()
 
+
 @register.simple_tag()
 def restviews_head():
 
@@ -43,26 +44,37 @@ def restviews_grid(grid, url, *args, **kwargs):
     configuration = {
         "grid": grid,
         "url": url,
+
         "hideFields": "",
         "fields": "",
+
+        "itemId": "id",
+        "newItemLabel": _("New %(item)s") % {
+            "item": grid
+        },
+
+        "canCreate": "true",
+        "canUpdate": "true",
+        "canDelete": "true",
+
+        "uiImplementation": settings.RESTVIEWS_UI_IMPLEMENTATION,
+
         "paginationEnabled": "false",
         "itemsPerPage": "10",
         "maxPages": "0",
         "currentPage": "1",
         "paginateByParam": "page_size",
         "pageParam": "page",
-        "itemId": "id",
-        "newItemLabel": _("New %(item)s") % {
-            "item": grid
-        },
-        "canCreate": "true",
-        "canUpdate": "true",
-        "canDelete": "true",
-        "uiImplementation": settings.RESTVIEWS_UI_IMPLEMENTATION,
         "maxPageRange": "5",
-        "searchEnabled": "false",
+
+        "searchingEnabled": "false",
         "searchParam": "search",
-        "minSearch": "3"
+        "minSearch": "3",
+
+        "orderingEnabled": "false",
+        "orderingParam": "ordering",
+        "orderingField": "",
+        "orderingAsc": "true"
     }
 
     for field in configuration.keys():

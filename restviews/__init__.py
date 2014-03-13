@@ -1,14 +1,16 @@
 """ Django Restviews
 """
 
+import sys
 
-# From http://passingcuriosity.com/2010/default-settings-for-django-applications/
+
+# From http://passingcuriosity.com/
+# 2010/default-settings-for-django-applications/
 
 def inject_app_defaults(application):
     """Inject an application's default settings"""
     try:
         __import__('%s.settings' % application)
-        import sys
 
         # Import our defaults, project defaults, and project settings
         _app_settings = sys.modules['%s.settings' % application]

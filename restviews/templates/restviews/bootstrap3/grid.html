@@ -7,10 +7,9 @@
     </div>
     <div class="row">
         <div class="col-sm-8">
-            <span data-bind="if: searchEnabled">
+            <span data-bind="if: searchingEnabled">
                 <input type="text" class="form-control input-sm"
                        id="rv_search{{ grid }}"
-                       data-bind="if: searchEnabled"
                        placeholder="{% trans "Search" %}">
             </span>
         </div>
@@ -44,7 +43,55 @@
 
                 <!-- ko ifnot: hidden -->
 
-                <th data-bind="text: label">
+                <th data-bind="
+                    attr: {
+                        'data-fieldName': _field,
+                        'data-gridName': '{{ grid }}',
+                        'id': 'rv_header{{ grid }}' + _field
+                    }
+                " style="cursor: pointer">
+                    <span data-bind="
+                        text: label,
+                        attr: {
+                            'data-fieldName': _field,
+                            'data-gridName': '{{ grid }}'
+                        }
+                    ">
+
+                    </span>
+
+                    <!-- ko if: _field == $parent.orderingField() -->
+
+                    <!-- ko if: $parent.orderingAsc() -->
+
+                    <span class="glyphicon glyphicon-chevron-up"
+                        data-bind="
+                            attr: {
+                                'data-fieldName': _field,
+                                'data-gridName': '{{ grid }}'
+                            }
+                        ">
+
+                    </span>
+
+                    <!-- /ko -->
+
+                    <!-- ko ifnot: $parent.orderingAsc() -->
+
+                    <span class="glyphicon glyphicon-chevron-down"
+                          data-bind="
+                            attr: {
+                                'data-fieldName': _field,
+                                'data-gridName': '{{ grid }}'
+                            }
+                        ">
+
+                    </span>
+
+                    <!-- /ko -->
+
+                    <!-- /ko -->
+
                 </th>
 
                 <!-- /ko -->
