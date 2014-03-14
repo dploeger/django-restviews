@@ -4,7 +4,25 @@
 import sys
 
 
-# From http://passingcuriosity.com/
+# Based on http://stackoverflow.com/a/7205107/2918840
+
+def merge(a, b, path=None):
+
+    if path is None: path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass # same leaf value
+            else:
+                a[key] = b[key]
+        else:
+            a[key] = b[key]
+    return a
+
+
+# Based on http://passingcuriosity.com/
 # 2010/default-settings-for-django-applications/
 
 def inject_app_defaults(application):
@@ -26,6 +44,17 @@ def inject_app_defaults(application):
                 # Add the value to the settings, if not already present
                 if not hasattr(_settings, _k):
                     setattr(_settings, _k, getattr(_app_settings, _k))
+                elif type(getattr(_app_settings, _k)) is dict:
+
+                    setattr(
+                        _settings,
+                        _k,
+                        merge(
+                            getattr(_app_settings, _k),
+                            getattr(_settings, _k)
+                        )
+                    )
+
     except ImportError:
         # Silently skip failing settings modules
         pass

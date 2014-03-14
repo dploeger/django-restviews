@@ -323,7 +323,7 @@ rv.model.prototype.getOptions = function (url, callback) {
 
                 }
 
-                if (callback !== undefined) {
+                if (callback) {
 
                     callback.apply(this, [retval]);
 
@@ -415,45 +415,56 @@ rv.model.prototype.loadAll = function () {
  */
 
 rv.model.prototype.loadData = function () {
+    
+    var that = this;
 
-    var url = this.url + "/";
+    if (!this.fieldsLoaded) {
+
+        window.setTimeout(
+            this.loadData(),
+            1000
+        );
+
+    }
+
+    var url = that.url + "/";
 
     // Clear Alerts
 
-    this.clearAlerts();
+    that.clearAlerts();
 
     var request = [];
 
-    if (this.paginationEnabled) {
+    if (that.paginationEnabled) {
 
-        request.push(this.pageParam + "=" + this.currentPage());
-        request.push(this.paginateByParam + "=" + this.itemsPerPage);
-
-    }
-
-    if (
-        (this.searchingEnabled) &&
-        (this.currentSearch != "")
-    ) {
-
-        request.push(this.searchParam + "=" + this.currentSearch);
+        request.push(that.pageParam + "=" + that.currentPage());
+        request.push(that.paginateByParam + "=" + that.itemsPerPage);
 
     }
 
     if (
-        (this.orderingEnabled) &&
-        (this.orderingField() != "")
+        (that.searchingEnabled) &&
+        (that.currentSearch != "")
     ) {
 
-        var orderingField = this.orderingField();
+        request.push(that.searchParam + "=" + that.currentSearch);
 
-        if (!this.orderingAsc()) {
+    }
+
+    if (
+        (that.orderingEnabled) &&
+        (that.orderingField() != "")
+    ) {
+
+        var orderingField = that.orderingField();
+
+        if (!that.orderingAsc()) {
 
             orderingField = "-" + orderingField;
 
         }
 
-        request.push(this.orderingParam + "=" + orderingField);
+        request.push(that.orderingParam + "=" + orderingField);
 
     }
 
@@ -479,26 +490,26 @@ rv.model.prototype.loadData = function () {
 
                 // Support pagination
 
-                if (this.paginationEnabled) {
+                if (that.paginationEnabled) {
 
-                    this.maxPages(Math.ceil(data.count / this.itemsPerPage));
+                    that.maxPages(Math.ceil(data.count / that.itemsPerPage));
 
-                    this.pageRange.removeAll();
+                    that.pageRange.removeAll();
 
-                    if (this.currentPage() > this.maxPageRange() - 1) {
+                    if (that.currentPage() > that.maxPageRange() - 1) {
 
-                        this.pageRange.push("...");
+                        that.pageRange.push("...");
 
                     }
 
                     var start =
-                        this.currentPage()
-                            - Math.floor(this.maxPageRange() / 2);
+                        that.currentPage()
+                            - Math.floor(that.maxPageRange() / 2);
 
-                    if (start + this.maxPageRange() > this.maxPages()) {
+                    if (start + that.maxPageRange() > that.maxPages()) {
 
-                        start = this.maxPages()
-                            - this.maxPageRange()
+                        start = that.maxPages()
+                            - that.maxPageRange()
                             + 1;
 
                     }
@@ -507,23 +518,23 @@ rv.model.prototype.loadData = function () {
                         start = 1;
                     }
 
-                    var end = start + this.maxPageRange() - 1;
+                    var end = start + that.maxPageRange() - 1;
 
-                    if (end > this.maxPages()) {
+                    if (end > that.maxPages()) {
 
-                        end = this.maxPages();
+                        end = that.maxPages();
 
                     }
 
                     for (i = start; i <= end; i = i + 1) {
 
-                        this.pageRange.push(i);
+                        that.pageRange.push(i);
 
                     }
 
-                    if (end < this.maxPages()) {
+                    if (end < that.maxPages()) {
 
-                        this.pageRange.push("...");
+                        that.pageRange.push("...");
 
                     }
 
@@ -534,25 +545,81 @@ rv.model.prototype.loadData = function () {
                 // We have the data. Simply use an observableArray to
                 // make it Knockout-compliant
 
-                this.data.removeAll();
+                that.data.removeAll();
 
-                for (i = 0; i < data.length; i = i + 1) {
+                var dateFields = [];
 
-                    this.data.push(data[i]);
+                $.each(that.fields(), function (key, value) {
+
+                    var isDate = $.inArray(
+                        value.type, ["date", "datetime", "time"]
+                    );
+
+                    if (isDate != -1) {
+
+                        dateFields.push(value);
+
+                    }
+
+                });
+
+                if (dateFields.length > 0) {
+
+                    moment.lang(rv.lang);
 
                 }
 
-                this.dataLoaded = true;
+                for (i = 0; i < data.length; i = i + 1) {
+
+                    $.each(
+                        dateFields,
+                        function (key, value) {
+
+                            var fromFormat = "",
+                                toFormat = "",
+                                field = value["_field"],
+                                fieldType = value.type;
+
+                            // Convert from Backend
+
+                            switch (fieldType) {
+
+                                case "date":
+                                    fromFormat = "YYYY-MM-DD";
+                                    toFormat = "L";
+                                    break;
+                                case "datetime":
+                                    fromFormat = "YYYY-MM-DD HH:mm:ss";
+                                    toFormat = "L LT";
+                                    break;
+                                case "time":
+                                    fromFormat = "HH:mm:ss";
+                                    toFormat = "LT";
+
+                            }
+
+                            var tmp = moment(data[i][field], fromFormat);
+
+                            data[i][field] = tmp.format(toFormat)
+
+                        }
+                    );
+
+                    that.data.push(data[i]);
+
+                }
+
+                that.dataLoaded = true;
 
 
             },
             error: function (xhr, status, error) {
 
-                $("#" + this.grid + "Alert")
+                $("#" + that.grid + "Alert")
                     .html(
                         rv.msg["LoadError"]
                             + ' <a href="#" onClick="rv.grids[\''
-                            + this.grid
+                            + that.grid
                             + '\'].loadData()">'
                             + rv.msg["Retry"]
                             + '</a>'
@@ -565,7 +632,7 @@ rv.model.prototype.loadData = function () {
                     .addClass("alert-danger shown");
 
             },
-            context: this
+            context: that
         }
     );
 

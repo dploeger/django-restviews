@@ -39,6 +39,33 @@
                             class="col-sm-2 control-label">
                         </label>
                         <div class="col-sm-10">
+                            <!-- ko if: type == "datetime" || type == "date"
+                            || type == "time"
+                            -->
+                            <div class='input-group date'
+                                 data-bind="attr: {
+                                    'id': 'rv_Update' + type + '{{ grid }}' +
+                                    _field
+                                 }"
+                                >
+                                <input
+                                    data-form="Update"
+                                    data-bind="rvInput: '{{ grid }}'"
+                                    class="form-control">
+
+                                <span class="input-group-addon">
+                                    <!-- ko if: type == 'time' -->
+                                    <span class="glyphicon glyphicon-time">
+                                    </span>
+                                    <!-- /ko -->
+                                    <!-- ko ifnot: type == 'time' -->
+                                    <span class="glyphicon glyphicon-calendar">
+                                    </span>
+                                    <!-- /ko -->
+                                </span>
+
+                            </div>
+                            <!-- /ko -->
                             <!-- ko if: type == "text" -->
                             <textarea
                                 data-form="Update"
@@ -46,7 +73,9 @@
                                 class="form-control"
                                 ></textarea>
                             <!-- /ko -->
-                            <!-- ko ifnot: type == "text" -->
+                            <!-- ko ifnot: (type == "text" || type ==
+                            "datetime" || type == "date" || type == "time")
+                            -->
                             <input
                                 data-form="Update"
                                 data-bind="rvInput: '{{ grid }}'"

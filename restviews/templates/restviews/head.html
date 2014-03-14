@@ -1,11 +1,20 @@
 {% load i18n %}
-<!-- Call Knockout -->
 
-<script src="{{ knockout_url }}"></script>
+<!-- Include jQuery -->
+
+<script src="{{ lib_url_jquery }}"></script>
+
+<!-- Include Knockout -->
+
+<script src="{{ lib_url_knockout }}"></script>
+
+<!-- Include Moment.js -->
+
+<script src="{{ lib_url_moment }}"></script>
 
 <!-- Include jquery.hotkeys.js -->
 
-<script src="{{ jquery_hotkeys_url }}"></script>
+<script src="{{ lib_url_jquery_hotkeys }}"></script>
 
 <!-- Include Restviews Bootstrapping-Functions -->
 
@@ -32,6 +41,8 @@
 
     };
 
+    rv.uiImplementation = "{{ ui }}";
+
 </script>
 
 <!-- Include the other RestView Javascript libraries -->
@@ -40,3 +51,25 @@
 <script src="{{ restviews_url_functions }}"></script>
 <script src="{{ restviews_url_validators }}"></script>
 <script src="{{ restviews_url_ko_bindings }}"></script>
+
+{% if ui == "bootstrap3" %}
+
+<!-- Include Bootstrap -->
+
+<link rel="stylesheet" type="text/css"
+      href="{{ lib_url_bootstrap3.css }}">
+
+<link rel="stylesheet" type="text/css"
+      href="{{ lib_url_bootstrap3.theme }}">
+
+<script src="{{ lib_url_bootstrap3.js }}"></script>
+
+<!-- Include Bootstrap3-datetimepicker -->
+
+<link rel="stylesheet" type="text/css"
+      href="{{ lib_url_bootstrap3_datetimepicker.css }}">
+
+<script src="{{ lib_url_bootstrap3_datetimepicker.js }}"></script>
+
+
+{% endif %}

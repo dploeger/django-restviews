@@ -125,6 +125,74 @@ rv.activateGrids = function () {
 
         }
 
+        // Enable date pickers
+
+        $.each(
+            value.fields(),
+            function (fieldKey, fieldValue) {
+
+                $.each(["New", "Update"], function (typekey, typevalue) {
+
+                     var $picker =
+                        $("#rv_"
+                            + typevalue
+                            + fieldValue.type
+                            + key
+                            + fieldValue["_field"]
+                        );
+
+                    if (fieldValue.type == "datetime") {
+
+                        $picker
+                            .datetimepicker({
+                                language: navigator.language ||
+                                    navigator.userLanguage
+                            });
+
+                    }
+
+                    if (fieldValue.type == "date") {
+
+                        $picker
+                            .datetimepicker({
+                                pickTime: false,
+                                language: navigator.language ||
+                                    navigator.userLanguage
+                            });
+
+                    }
+
+                    if (fieldValue.type == "time") {
+
+                        $picker
+                            .datetimepicker({
+                                pickDate: false,
+                                language: navigator.language ||
+                                    navigator.userLanguage
+                            });
+
+                    }
+
+                    $picker
+                        .find("input")
+                        .data(
+                            "DateTimePicker",
+                            $picker.data("DateTimePicker")
+                        );
+
+                    $picker
+                        .on(
+                            "dp.change",
+                            function (ev) {
+                                $picker.find("input").change();
+                            }
+                        );
+
+                });
+
+            }
+        )
+
     });
 
     return true;
@@ -182,7 +250,7 @@ rv.addGrid = function (params) {
 
 rv.addNewItemShorcut = function () {
 
-    jQuery(document).on(
+    $(document).on(
         "keydown." + rv.msg["HotKeyNewItem"],
         "",
         "NewItem",
@@ -445,6 +513,8 @@ rv.saveForm = function (formName, grid, update) {
 
     var inputs = $("#" + formName + " input").toArray();
 
+    var methodTag = update ? "Update" : "New";
+
     // Add textareas
 
     inputs = inputs.concat($("#" + formName + " textarea").toArray());
@@ -467,7 +537,38 @@ rv.saveForm = function (formName, grid, update) {
 
         }
 
-        data[$(inputs[i]).data("rv.field")] = $(inputs[i]).val();
+        var value = $(inputs[i]).val();
+        var fieldType = $(inputs[i]).data("rv.type");
+        var field = $(inputs[i]).data("rv.field");
+
+        if (
+            (rv.uiImplementation == "bootstrap3") &&
+            ($.inArray(fieldType, ["date", "datetime", "time"]) != -1)
+        ) {
+
+            // Work together with bootstrap3-datetimepicker
+
+            var tmpDate = $("#rv_" + methodTag + fieldType + grid + field)
+                .data("DateTimePicker")
+                .date;
+
+            switch (fieldType) {
+
+                case "date":
+                    value = tmpDate.format("YYYY-MM-DD");
+                    break;
+                case "time":
+                    value = tmpDate.format("HH:mm:ss");
+                    break;
+                case "datetime":
+                    value = tmpDate.format("YYYY-MM-DD HH:mm:ss");
+                    break;
+
+            }
+
+        }
+
+        data[field] = value;
 
     }
 
@@ -677,7 +778,7 @@ rv.validateHandler = function(ev) {
 
     } else {
 
-        validated = rv[validationFunction](value, validationString);
+        validated = rv[validationFunction](el, value, validationString);
 
     }
 

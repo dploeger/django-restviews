@@ -25,6 +25,14 @@ rv.showNewItemDialogButtons = [];
 
 rv.actionsRegistry = {};
 
+// Which UI implementation is used?
+
+rv.uiImplementation = "";
+
+// Set Moment language
+
+rv.lang = navigator.language || navigator.userLanguage;
+
 // Activate the grids, once the document is loaded
 
 $( document ).ready(function() {

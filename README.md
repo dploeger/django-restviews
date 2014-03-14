@@ -15,13 +15,16 @@ REST-based Django CrUD-Views
 
 Restviews is based on the following libraries:
 
-* Django
-* jQuery
-* knockoutJS
+* [Django][django]
+* [jQuery][jquery]
+* [jQuery Hotkeys][hotkeys]
+* [Knockout][knockout]
+* [Moment.js][moment]
 
 The default user interface implementation uses
 
-* Bootstrap 3
+* [Bootstrap 3][bootstrap3]
+* [Bootstrap Datetimepicker][bootstrap-datetimepicker]
 
 ### Creating grids
 
@@ -61,3 +64,10 @@ the user and are validated.
 [pagination]: http://www.django-rest-framework.org/api-guide/pagination
 [searching]: http://www.django-rest-framework.org/api-guide/filtering#searchfilter
 [ordering]: http://www.django-rest-framework.org/api-guide/filtering#orderingfilter
+[django]: http://djangoproject.com/
+[jquery]: http://jquery.com/
+[hotkeys]: https://code.google.com/p/js-hotkeys/
+[knockout]: http://knockoutjs.com/
+[moment]: http://momentjs.com/
+[bootstrap3]: http://getbootstrap.com/
+[bootstrap-datetimepicker]: http://eonasdan.github.io/bootstrap-datetimepicker/

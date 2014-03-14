@@ -14,6 +14,7 @@ ko.bindingHandlers.rvInput = {
         ) {
 
         var el = $(element);
+        var type = bindingContext.$data.type;
 
         el.attr(
             "id",
@@ -26,6 +27,11 @@ ko.bindingHandlers.rvInput = {
             bindingContext.$data["_field"]
         );
 
+        el.data(
+            "rv.type",
+            type
+        );
+
         if (bindingContext.$data.hidden) {
 
             el.data("rv.isValid", true);
@@ -36,8 +42,6 @@ ko.bindingHandlers.rvInput = {
 
         }
 
-        var type = bindingContext.$data.type;
-
         el.data(
             "rv.validationFunction",
             "validate"
@@ -47,8 +51,6 @@ ko.bindingHandlers.rvInput = {
             "rv.validationString",
             ".*"
         );
-
-
 
         el.attr(
             "type",
@@ -129,14 +131,54 @@ ko.bindingHandlers.rvInput = {
                 );
                 break;
 
-            case "datetime":
-                el.attr(
-                    "type",
-                    "datetime"
+            case "date":
+
+                if (rv.uiImplementation != "bootstrap3") {
+
+                    el.attr(
+                        "type",
+                        "date"
+                    );
+
+                }
+
+                el.data(
+                    "rv.validationFunction",
+                    "validateDate"
                 );
+                break;
+
+            case "datetime":
+
+                if (rv.uiImplementation != "bootstrap3") {
+
+                    el.attr(
+                        "type",
+                        "datetime"
+                    );
+
+                }
+
                 el.data(
                     "rv.validationFunction",
                     "validateDateTime"
+                );
+                break;
+
+            case "time":
+
+                if (rv.uiImplementation != "bootstrap3") {
+
+                    el.attr(
+                        "type",
+                        "time"
+                    );
+
+                }
+
+                el.data(
+                    "rv.validationFunction",
+                    "validateTime"
                 );
                 break;
 
