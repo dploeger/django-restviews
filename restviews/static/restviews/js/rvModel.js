@@ -5,12 +5,18 @@
  * @property {String} url URL to REST-backend
  * @property {String} grid The name of the instance
  * @property {ko.observableArray} fields Fields of the GridView
+ * @property {ko.observableArray} fieldsView Fields of the GridView (View)
+ * @property {ko.observableArray} fieldsCreate Fields of the GridView (Create)
+ * @property {ko.observableArray} fieldsUpdate Fields of the GridView (Update)
  * @property {ko.observableArray} data The actual data of the Gridview
  * @property {boolean} fieldsLoaded Are the fields available?
  * @property {boolean} dataLoaded Is the data available?
  * @property {boolean} environmentInterpret Has environment interpretation
  *  taken place
  * @property {Array} hideFields Should some fields be hidden?
+ * @property {Array} hideFieldsView Should some fields be hidden? (View)
+ * @property {Array} hideFieldsCreate Should some fields be hidden? (Create)
+ * @property {Array} hideFieldsUpdate Should some fields be hidden? (Update)
  * @property {boolean} canCreate can the user create objects?
  * @property {boolean} canUpdate can the user update objects?
  * @property {boolean} canDelete can the user delete objects?
@@ -49,11 +55,17 @@ rv.model = function (params) {
     this.grid = "";
 
     this.fields = ko.observableArray();
+    this.fieldsView = ko.observableArray();
+    this.fieldsCreate = ko.observableArray();
+    this.fieldsUpdate = ko.observableArray();
     this.data = ko.observableArray();
     this.fieldsLoaded = false;
     this.dataLoaded = false;
     this.environmentInterpreted = false;
     this.hideFields = [];
+    this.hideFieldsView = [];
+    this.hideFieldsCreate = [];
+    this.hideFieldsUpdate = [];
     this.canCreate = ko.observable(false);
     this.canUpdate = ko.observable(false);
     this.canDelete = ko.observable(false);
@@ -94,66 +106,169 @@ rv.model = function (params) {
 
     }
 
-    if (typeof params.hideFields == "string") {
+    $.each(
+        [
+            "hideFields",
+            "hideFieldsView",
+            "hideFieldsCreate",
+            "hideFieldsUpdate"
+        ],
+        function (k,v) {
 
-        params.hideFields = params.hideFields.split(",")
+            if (
+                (params.hasOwnProperty(v)) &&
+                (typeof params[v] == "string") &&
+                (params[v] != "")
+            ) {
 
-    }
+                params[v] = params[v].split(",");
 
-    if (typeof params.fields == "string") {
+            }
 
-        var fields = params.fields.split(",");
+        }
+    );
 
-        var tmpfields = [];
+    $.each(
+        ["hideFieldsView", "hideFieldsCreate", "hideFieldsUpdate"],
+        function (k, v) {
 
-        for (var i = 0; i < fields.length; i = i + 1) {
+            if (
+                (!params.hasOwnProperty(v)) ||
+                (params[v] == "")
+            ) {
 
-            var tmp = fields[i].split(":");
+                params[v] = params.hideFields;
 
-            // Is this field required?
+            }
 
-            var required = false;
+        }
+    );
 
-            if (tmp.length - 1 >= 3) {
+    $.each(
+        ["fields", "fieldsView", "fieldsCreate", "fieldsUpdate"],
+        function (k,v) {
 
-                if (tmp[3] == "1") {
+            if (
+                (params.hasOwnProperty(v)) &&
+                (typeof params[v] == "string") &&
+                (params[v] != "")
+            ) {
 
-                    required = true;
+                var fields = params[v].split(",");
+
+                var tmpfields = [];
+
+                for (var i = 0; i < fields.length; i = i + 1) {
+
+                    var tmp = fields[i].split(":");
+
+                    // Is this field required?
+
+                    var required = false;
+
+                    if (tmp.length - 1 >= 3) {
+
+                        if (tmp[3] == "1") {
+
+                            required = true;
+
+                        }
+
+                    }
+
+                    // Field default value
+
+                    var fieldDefault = null;
+
+                    if (tmp.length -1 >= 4) {
+
+                        fieldDefault = tmp[4];
+
+                    }
+
+                    var hiddenFields;
+
+                    switch (v) {
+
+                        case "fields":
+                            hiddenFields = params.hideFields;
+                            break;
+                        case "fieldsView":
+                            hiddenFields = params.hideFieldsView;
+                            break;
+                        case "fieldsCreate":
+                            hiddenFields = params.hideFieldsCreate;
+                            break;
+                        case "fieldsUpdate":
+                            hiddenFields = params.hideFieldsUpdate;
+                            break;
+
+                    }
+
+                    var hidden = $.inArray(tmp[0], hiddenFields) > -1;
+
+                    // Add interpreted field
+
+                    tmpfields.push({
+
+                        "_field": tmp[0],
+                        "label": tmp[1],
+                        "type": tmp[2],
+                        "required": required,
+                        "default": fieldDefault,
+                        "hidden": hidden
+
+                    });
 
                 }
 
-            }
-
-            // Field default value
-
-            var fieldDefault = null;
-
-            if (tmp.length -1 >= 4) {
-
-                fieldDefault = tmp[4];
+                params[v] = tmpfields;
 
             }
-
-            var hidden = $.inArray(tmp[0], params.hideFields) > -1;
-
-            // Add interpreted field
-
-            tmpfields.push({
-
-                "_field": tmp[0],
-                "label": tmp[1],
-                "type": tmp[2],
-                "required": required,
-                "default": fieldDefault,
-                "hidden": hidden
-
-            });
 
         }
+    );
 
-        params.fields = tmpfields;
+    $.each(
+        ["fieldsView", "fieldsCreate", "fieldsUpdate"],
+        function (k, v) {
 
-    }
+            if (
+                (!params.hasOwnProperty(v)) ||
+                (params[v] == "")
+            ) {
+
+                params[v] = params.fields;
+
+            }
+
+        }
+    );
+
+    $.each(
+        ["actions", "globalActions"],
+        function (k,v) {
+
+            if (
+                (params.hasOwnProperty(v)) &&
+                (typeof params[v] == "string") &&
+                (params[v] != "")
+            ) {
+
+                var tmp = params[v].split(":");
+
+                params[v] = {
+
+                    "action": tmp[0],
+                    "label": tmp[1],
+                    "addClass": tmp.length >= 3 ? tmp[2] : ""
+
+                };
+
+            }
+
+        }
+    );
 
     // Apply parameters
 
@@ -546,19 +661,44 @@ rv.model.prototype.loadData = function () {
 
                 var dateFields = [];
 
-                $.each(that.fields(), function (key, value) {
+                $.each(
+                    [that.fields(), that.fieldsUpdate()],
+                    function (k, v) {
 
-                    var isDate = $.inArray(
-                        value.type, ["date", "datetime", "time"]
-                    );
+                        $.each(v, function (k2, v2) {
 
-                    if (isDate != -1) {
+                            var isDate = $.inArray(
+                                v2.type, ["date", "datetime", "time"]
+                            );
 
-                        dateFields.push(value);
+                            if (isDate != -1) {
 
-                    }
+                                var exists = false;
 
-                });
+                                $.each(
+                                    dateFields,
+                                    function (k3,v3) {
+
+                                        if (v3["_field"] == v2["_field"]) {
+
+                                            exists = true;
+
+                                        }
+
+                                    }
+                                );
+
+                                if (!exists) {
+
+                                    dateFields.push(v2);
+
+                                }
+
+                            }
+
+                        });
+
+                    });
 
                 if (dateFields.length > 0) {
 

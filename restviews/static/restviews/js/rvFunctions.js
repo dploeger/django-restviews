@@ -121,7 +121,7 @@ rv.activateGrids = function () {
         if (value.orderingEnabled) {
 
             $.each(
-                value.fields(),
+                value.fieldsView(),
                 function (fieldKey, fieldValue) {
 
                     $("#rv_header" + key + fieldValue["_field"])
@@ -138,70 +138,77 @@ rv.activateGrids = function () {
         // Enable date pickers
 
         $.each(
-            value.fields(),
-            function (fieldKey, fieldValue) {
+            ["fieldsView", "fieldsCreate", "fieldsUpdate"],
+            function (k,v) {
 
-                $.each(["New", "Update"], function (typekey, typevalue) {
+                $.each(
+                    value[v].apply(),
+                    function (fieldKey, fieldValue) {
 
-                     var $picker =
-                        $("#rv_"
-                            + typevalue
-                            + fieldValue.type
-                            + key
-                            + fieldValue["_field"]
-                        );
+                        $.each(
+                            ["New", "Update"],
+                            function (typekey, typevalue) {
 
-                    if (fieldValue.type == "datetime") {
+                                var $picker =
+                                    $("#rv_"
+                                            + typevalue
+                                            + fieldValue.type
+                                            + key
+                                            + fieldValue["_field"]
+                                    );
 
-                        $picker
-                            .datetimepicker({
-                                language: navigator.language ||
-                                    navigator.userLanguage
+                                if (fieldValue.type == "datetime") {
+
+                                    $picker
+                                        .datetimepicker({
+                                            language: navigator.language ||
+                                                navigator.userLanguage
+                                        });
+
+                                }
+
+                                if (fieldValue.type == "date") {
+
+                                    $picker
+                                        .datetimepicker({
+                                            pickTime: false,
+                                            language: navigator.language ||
+                                                navigator.userLanguage
+                                        });
+
+                                }
+
+                                if (fieldValue.type == "time") {
+
+                                    $picker
+                                        .datetimepicker({
+                                            pickDate: false,
+                                            language: navigator.language ||
+                                                navigator.userLanguage
+                                        });
+
+                                }
+
+                                $picker
+                                    .find("input")
+                                    .data(
+                                    "DateTimePicker",
+                                    $picker.data("DateTimePicker")
+                                );
+
+                                $picker
+                                    .on(
+                                    "dp.change",
+                                    function (ev) {
+                                        $picker.find("input").change();
+                                    }
+                                );
+
                             });
 
-                    }
+                    });
 
-                    if (fieldValue.type == "date") {
-
-                        $picker
-                            .datetimepicker({
-                                pickTime: false,
-                                language: navigator.language ||
-                                    navigator.userLanguage
-                            });
-
-                    }
-
-                    if (fieldValue.type == "time") {
-
-                        $picker
-                            .datetimepicker({
-                                pickDate: false,
-                                language: navigator.language ||
-                                    navigator.userLanguage
-                            });
-
-                    }
-
-                    $picker
-                        .find("input")
-                        .data(
-                            "DateTimePicker",
-                            $picker.data("DateTimePicker")
-                        );
-
-                    $picker
-                        .on(
-                            "dp.change",
-                            function (ev) {
-                                $picker.find("input").change();
-                            }
-                        );
-
-                });
-
-            }
-        )
+            });
 
     });
 
@@ -263,13 +270,23 @@ rv.addNewItemShorcut = function () {
 /**
  * Clears a form and resets the default values
  *
- * @param formName The name of the form
+ * @param methodTag What form are we in ("New", "Update"?)
  * @param grid The name of the grid
  */
 
-rv.clearForm = function (formName, grid) {
+rv.clearForm = function (methodTag, grid) {
 
-    var fields = rv.grids[grid].fields();
+    var fields;
+
+    if (methodTag == "New") {
+
+        rv.grids[grid].fieldsCreate();
+
+    } else {
+
+        rv.grids[grid].fieldsUpdate();
+
+    }
 
     for (var i = 0; i < fields.length; i = i + 1) {
 
@@ -283,7 +300,7 @@ rv.clearForm = function (formName, grid) {
 
         }
 
-        $("#rv_" + grid + "New" + field["_field"]).val(
+        $("#rv_" + grid + methodTag + field["_field"]).val(
             value
         );
 
@@ -542,7 +559,7 @@ rv.saveForm = function (formName, grid, update) {
 
                 rv.grids[grid].loadData();
 
-                rv.clearForm(formName, grid);
+                rv.clearForm(update ? "Update" : "New", grid);
 
                 $modal.modal("hide");
 

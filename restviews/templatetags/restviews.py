@@ -25,7 +25,13 @@ def restviews_grid(grid, url, *args, **kwargs):
         "url": url,
 
         "hideFields": "",
+        "hideFieldsView": "",
+        "hideFieldsCreate": "",
+        "hideFieldsUpdate": "",
         "fields": "",
+        "fieldsView": "",
+        "fieldsCreate": "",
+        "fieldsUpdate": "",
 
         "itemId": "id",
         "newItemLabel": _("New %(item)s") % {
