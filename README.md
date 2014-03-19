@@ -70,21 +70,21 @@ as the DRF only supplies Django with a valid REST framework,
 Restviews should also be compatible with other frameworks supporting these
 types of URL:
 
-* GET <Endpoint>/ - Retrieve a list of items
-* POST <Endpoint>/ - Create a new item. The data is supplied in JSON notation
-* DELETE <Endpoint>/<Item-ID>/ - Delete the item with the id <Item-ID>. The
+* GET [Endpoint]/ - Retrieve a list of items
+* POST [Endpoint]/ - Create a new item. The data is supplied in JSON notation
+* DELETE [Endpoint]/[Item-ID]/ - Delete the item with the id [Item-ID]. The
   ID-field can be configured and defaults to "id"
-* PUT <Endpoint>/<Item-ID>/ - Update the data of item <Item-ID>. The data is
+* PUT [Endpoint]/[Item-ID]/ - Update the data of item [Item-ID]. The data is
   supplied in JSON notation
 
 Additional features require this:
 
-* OPTIONS <Endpoint>/ - Automatic field lookup (not recommended anyway)
-* GET <Endpoint>/?search=*s - Only retrieve items, that match "*s" (the
+* OPTIONS [Endpoint]/ - Automatic field lookup (not recommended anyway)
+* GET [Endpoint]/?search=*s - Only retrieve items, that match "*s" (the
   keyword "search" is configurable)
-* GET <Endpoint>?order=(-)*s - Return items sorted by "*s",
+* GET [Endpoint]?order=(-)*s - Return items sorted by "*s",
   optionally with a prefixed "-" to reverse sort order
-* GET <Endpoint>?page=*p&page_size=*ps - Return only page \*p of pages, which
+* GET [Endpoint]?page=*p&page_size=*ps - Return only page \*p of pages, which
   have a maximum row count of \*ps (the keywords "page" and "page_size" are
   configurable)
 
@@ -94,9 +94,9 @@ To begin using restviews, add the restviews app to your django project by
 adding "restviews" to the INSTALLED_APPS-settings.
 
 If you want to use restviews, you have to add the template tag {{
-restviews_head }} into your base template's <head>-area and {{
-restviews_body }} into the <body>-part (it's recommended to place it directly
- after the starting <body>-tag).
+restviews_head }} into your base template's head-area and {{
+restviews_body }} into the body-part (it's recommended to place it directly
+ after the starting body-tag).
 
 ## Creating grids
 
@@ -253,8 +253,8 @@ include it in the core distribution.
 
 #### HTML
 
-The HTML-part of the ui resides in restviews/templates/restviews/<name of
-ui>/template.html. The bootstrap3-implementation uses that as a starting
+The HTML-part of the ui resides in restviews/templates/restviews/[name of
+ui]/template.html. The bootstrap3-implementation uses that as a starting
 point for the template and includes further specific files inside the same
 directory. Take a look at that implementation for further reference.
 
@@ -262,7 +262,7 @@ directory. Take a look at that implementation for further reference.
 
 Restviews calls some javascript methods during its workflow. These calls are
 inside a rv.ui-object. The specific javascript file should reside in
-restviews/static/restviews/js/ui/<name of ui>.js and should implement these
+restviews/static/restviews/js/ui/[name of ui].js and should implement these
 functions:
 
 * convertDateTime (methodTag, fieldType, grid, field): Convert the current
