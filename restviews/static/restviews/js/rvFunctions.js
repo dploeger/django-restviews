@@ -82,6 +82,12 @@ rv.activateGrids = function () {
                 function (ev) {
                     var el = $(this);
 
+                    if (el.val() == value.currentSearch) {
+
+                        return;
+
+                    }
+
                     if (
                         (el.val().length >= value.minSearch) ||
                         (
@@ -97,6 +103,10 @@ rv.activateGrids = function () {
                             value.currentSearch = "";
 
                         }
+
+                        // Reset current page for new searches
+
+                        value.currentPage(1);
 
                         value.loadData();
 
