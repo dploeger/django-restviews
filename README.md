@@ -9,8 +9,8 @@ maintainable and scalable web applications. With the addition of REST
 frameworks like the [Django REST Framework][drf], an API-based approach to
 web development is also possible.
 
-This Django application fills one specific gap. If you have an API-based
-approach to your development you don't want to build a separate web UI,
+This Django application fills one specific gap: If you have an API-based
+approach to your development, you don't want to build a separate web UI,
 that is based on the Django view/template/model-framework and doesn't adhere
 to your own API-standards.
 
@@ -18,9 +18,9 @@ You want a UI, that specifically uses the API for data retrieval and
 manipulation. Having the API and not the web UI as a first class citizen is a
 primary goal of an API-based approach.
 
-The problem is, that you loose a whole bunch of speed if you have to leave
-Django's wonderful generic class based views behind and recreate the same
-functionality the AJAX/API-way.
+The problem is, that you loose a whole bunch of development speed if you have
+to leave Django's wonderful generic class based views behind and recreate the
+ same functionality the AJAX/API-way.
 
 Django-Restviews helps you by offering a complete CrUD-framework (Create,
 Update, Delete) and a data grid that all use the API for data retrieval and
@@ -33,6 +33,7 @@ based generic views.
 * Complete CrUD (Create, Update, Delete) functionality for each datagrid
 * Input validation
 * Specific widgets per data type
+* Custom row-level and global actions
 * [pagination][pagination]
 * [searching][searching]
 * [ordering][ordering]
@@ -72,17 +73,20 @@ types of URL:
 * GET <Endpoint>/ - Retrieve a list of items
 * POST <Endpoint>/ - Create a new item. The data is supplied in JSON notation
 * DELETE <Endpoint>/<Item-ID>/ - Delete the item with the id <Item-ID>. The
-ID-field can be configured and defaults to "id"
+  ID-field can be configured and defaults to "id"
 * PUT <Endpoint>/<Item-ID>/ - Update the data of item <Item-ID>. The data is
-supplied in JSON notation
+  supplied in JSON notation
 
 Additional features require this:
 
 * OPTIONS <Endpoint>/ - Automatic field lookup (not recommended anyway)
 * GET <Endpoint>/?search=*s - Only retrieve items, that match "*s" (the
-keyword "search" is configurable)
+  keyword "search" is configurable)
 * GET <Endpoint>?order=(-)*s - Return items sorted by "*s",
-optionally with a prefixed "-" to reverse sort order
+  optionally with a prefixed "-" to reverse sort order
+* GET <Endpoint>?page=*p&page_size=*ps - Return only page \*p of pages, which
+  have a maximum row count of \*ps (the keywords "page" and "page_size" are
+  configurable)
 
 ## Using restviews
 
@@ -152,10 +156,10 @@ It's better to specify the columns in your template call to restviews_grid
 with the "fields"-parameter.
 
 The fields-parameter expects a string containing field definitions,
-separated by a comma (",").
+separated by a pipe-symbol ("|").
 
-One field definition is parameters separated by a colon (":"). These
-three parameters are:
+One field definition is parameters separated by a slash ("/"). These
+parameters are:
 
 * field name
 * Label to display (will be translated by Restviews)
@@ -178,21 +182,20 @@ the user and are validated.
 * url - An URL
 * color - A HTML color
 
-### Specifying different fields for create/update
+### Specifying different fields for view/create/update
 
 If you only supply the "fields"-parameter, the datagrid and the "create" and
-"update"-views contain the same parameter.
+"update"-views show the same fields.
 
-However, you can overwrite the "fields"-parameter using "fieldsCreate" or
-"fieldsUpdate" to specify different fields for either view.
+However, you can overwrite the "fields"-parameter using "fieldsView",
+"fieldsCreate" or "fieldsUpdate" to specify different fields for either view.
 
 ### Hiding fields
 
 You can (and most probably have to) hide fields, although they are specified
 in the "fields"-parameter. If you do this, the fields are nonetheless used in
  the UI, but are implemented as hidden input fields. To do this,
- supply a "hideFields" parameter consisting of comma-separated (",
- ") field names.
+ supply a "hideFields" parameter consisting of pipe-separated ("|") field names.
 
 The common use of this is the "id"-field. This has to be included into the
 "fields"-parameter, because the "update"-view wouldn't operate if you don't.
@@ -200,11 +203,12 @@ But the id is typically not displayed for the user, so it would be inside the
  "hideFields"-parameter.
 
 Like the "fields" parameter, the "hideFields"-parameter can also be
-overwritten with the "hideFieldsCreate" and "hideFieldsUpdate" respectively.
+overwritten with the "hideFieldsView", "hideFieldsCreate" and
+"hideFieldsUpdate" respectively.
 
 ### Adding more action
 
-The basic functionality of restviews would enable a "delete" and
+The basic functionality of restviews enables a "delete" and
 "update"-action for each row of the datagrid and a global "create"-action.
 
 If you want to add your own actions, you can do this using the
@@ -216,14 +220,15 @@ certain parameters. Before a action can be triggered,
 you have to call the function "rv.registerAction" with a name for the action,
  the javascript function and an array of arguments.
 
-Inside the argument, these special strings are handled:
+Inside the arguments, these special strings are recognized and properly
+replaced:
 
 * \_item - a Javascript object with the object data of the selected row
 * \_grid - the name of the grid of the selected row
 
 Afterwards, you supply the "action"-parameter inside the {{ restviews_grid
-}}-template tag. This parameter consists of comma-separated (",
-")-values that each contain multiple parameters separated by a colon (":"):
+}}-template tag. This parameter consists of pipe-separated ("|")
+-values that each contain multiple parameters separated by a slash ("/"):
 
 * the name of the action (as specified in the call to rv.registerAction)
 * a label for the button
@@ -236,19 +241,22 @@ special "_item"-argument obviously.
 ### UI implementation
 
 Restviews currently implements [Bootstrap3][bootstrap3] for the UI. If you
-don't like Bootstrap or implement another user interface,
+don't like Bootstrap or want to implement another user interface,
 you can still use restviews.
 
 To implement another UI, you'll have to supply some things. Please take a
 look at the bootstrap3-implementation for the structure of it and more
 information.
 
+If you have a new UI implementation, I'll be glad to accept pull requests to
+include it in the core distribution.
+
 #### HTML
 
 The HTML-part of the ui resides in restviews/templates/restviews/<name of
 ui>/template.html. The bootstrap3-implementation uses that as a starting
 point for the template and includes further specific files inside the same
-directory.
+directory. Take a look at that implementation for further reference.
 
 #### Javascript
 
@@ -260,16 +268,23 @@ functions:
 * convertDateTime (methodTag, fieldType, grid, field): Convert the current
   value of a date/time/datetime-field into a [Django-accepted
   datetime-format][django-datetime]
-** methodTag: Either "New" or "Update" for the Create and Update-view
+  * methodTag: Either "New" or "Update" for the Create and Update-view
    respectively
-** fieldType: Either "date", "datetime" or "time"
-** grid: The grid we're working on
-** field: The field name
+  * fieldType: Either "date", "datetime" or "time"
+  * grid: The grid we're working on
+  * field: The field name
+* getCreateAction: The UI-specific data for the "create" global action. Should
+  return an action object, with an action set to "rv.create." + grid.
+  * grid: The grid we're working on
 * getDeleteAction: The UI-specific data for the "delete" row-action. Should
   return an action object, with an action set to "rv.delete." + grid.
-** grid: The grid we're working on
+  * grid: The grid we're working on
+* getRefreshAction: The UI-specific data for the "refresh" global action. Should
+  return an action object, with an action set to "rv.refresh." + grid.
+  * grid: The grid we're working on
 * getUpdateAction: The UI-specific data for the "update" row-action. Should
   return an action object, with an action set to "rv.update." + grid.
+  * grid: The grid we're working on
 
 Please have a look at the bootstrap3 implementation for reference.
 

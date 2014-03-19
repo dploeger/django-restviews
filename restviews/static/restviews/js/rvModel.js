@@ -123,7 +123,7 @@ rv.model = function (params) {
                 (params[v] != "")
             ) {
 
-                params[v] = params[v].split(",");
+                params[v] = params[v].split("|");
 
             }
 
@@ -156,13 +156,13 @@ rv.model = function (params) {
                 (params[v] != "")
             ) {
 
-                var fields = params[v].split(",");
+                var fields = params[v].split("|");
 
                 var tmpfields = [];
 
                 for (var i = 0; i < fields.length; i = i + 1) {
 
-                    var tmp = fields[i].split(":");
+                    var tmp = fields[i].split("/");
 
                     // Is this field required?
 
@@ -260,10 +260,10 @@ rv.model = function (params) {
                 var tmpAction = [];
 
                 $.each(
-                    params[v].split(","),
+                    params[v].split("|"),
                     function (k2, v2) {
 
-                        var tmp = v2.split(":");
+                        var tmp = v2.split("/");
 
                         tmpAction.push({
 
