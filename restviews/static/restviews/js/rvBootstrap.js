@@ -29,6 +29,14 @@ rv.actionsRegistry = {};
 
 rv.uiImplementation = "";
 
+// Selector for the "new item" box for keyboard navigation
+
+rv.$newItemSelector = null;
+
+// UI implementation specific functions
+
+rv.ui = {};
+
 // Set Moment language
 
 rv.lang = navigator.language || navigator.userLanguage;

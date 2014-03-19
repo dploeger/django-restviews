@@ -1,0 +1,71 @@
+{# Global, not grid relevant items #}
+
+{% load i18n %}
+
+{# New item selector #}
+
+<div class="modal" id="rv_newItemSelector" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <select class="form-control">
+                    <option>
+                        {% trans "Please select what item to create." %}
+                    </option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default"
+                        data-dismiss="modal">
+                    {% trans "Cancel" %}
+                </button>
+                <button type="button" class="btn btn-primary">
+                    {% trans "Ok" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    rv.$newItemSelector = $("#rv_newItemSelector");
+
+    rv.$newItemSelector
+        .find("button.btn-default, select")
+        .on(
+            "keydown.esc",
+            function (ev) {
+
+                rv.$newItemSelector.modal("hide")
+
+            }
+        );
+
+    rv.$newItemSelector
+        .find("button.btn-primary, select")
+        .on(
+        "keydown.return",
+        function (ev) {
+
+            rv.$newItemSelector.modal("hide");
+
+            rv.handleNewItemSelector(ev);
+
+        }
+    );
+
+    rv.$newItemSelector
+        .find("button.btn-primary")
+        .on(
+        "click",
+        function (ev) {
+
+            rv.$newItemSelector.modal("hide");
+
+            rv.handleNewItemSelector(ev);
+
+        }
+    );
+
+</script>

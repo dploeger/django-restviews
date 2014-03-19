@@ -367,11 +367,9 @@ rv.model.prototype.interpretEnvironment = function () {
 
     if (this.canDelete()) {
 
-        this.actions.push({
-            'label': '<span class="glyphicon glyphicon-remove"></span>',
-            'addClass': 'btn-link',
-            'action': "rv.delete." + this.grid
-        });
+        this.actions.push(
+            rv.ui[rv.uiImplementation].getDeleteAction(this.grid)
+        );
 
     }
 
@@ -379,11 +377,9 @@ rv.model.prototype.interpretEnvironment = function () {
 
     if (this.canUpdate()) {
 
-        this.actions.push({
-            'label': '<span class="glyphicon glyphicon-edit"></span>',
-            'addClass': 'btn-link',
-            'action': "rv.update." + this.grid
-        });
+        this.actions.push(
+            rv.ui[rv.uiImplementation].getUpdateAction(this.grid)
+        );
 
     }
 
@@ -484,6 +480,7 @@ rv.model.prototype.loadData = function () {
         url,
         {
             type: "GET",
+            cache: false,
             success: function (data, status, xhr) {
 
                 var i;

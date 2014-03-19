@@ -37,7 +37,10 @@
         "DeleteSuccess": '{% trans "Successfully deleted item." %}',
         {# Translators: The Shortcut for a new item  #}
         "HotKeyNewItem": '{% trans "n" %}',
-        "SelectNewItem": '{% trans "Please select what item to create." %}'
+        "SelectNewItem": '{% trans "Please select what item to create." %}',
+        "Create": '{% trans "Create" %}',
+        "Update": '{% trans "Update" %}',
+        "Delete": '{% trans "Delete" %}'
 
     };
 
@@ -46,7 +49,7 @@
 </script>
 
 <!-- Include the other RestView Javascript libraries -->
-
+<script src="{{ restviews_url_ui }}"></script>
 <script src="{{ restviews_url_model }}"></script>
 <script src="{{ restviews_url_functions }}"></script>
 <script src="{{ restviews_url_validators }}"></script>

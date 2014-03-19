@@ -10,44 +10,12 @@ from django.utils.translation import ugettext as _
 
 register = template.Library()
 
-
 @register.simple_tag()
-def restviews_head():
-
-    # Generate URL context
-
-    context = {
-        "ui": settings.RESTVIEWS["ui_implementation"],
-        "restviews_url_bootstrap": StaticNode.handle_simple(
-            "restviews/js/rvBootstrap.js"
-        ),
-        "restviews_url_model": StaticNode.handle_simple(
-            "restviews/js/rvModel.js"
-        ),
-        "restviews_url_functions": StaticNode.handle_simple(
-            "restviews/js/rvFunctions.js"
-        ),
-        "restviews_url_validators": StaticNode.handle_simple(
-            "restviews/js/rvValidators.js"
-        ),
-        "restviews_url_ko_bindings": StaticNode.handle_simple(
-            "restviews/js/rvKoBindings.js"
-        )
-    }
-
-    for tag, url in settings.RESTVIEWS["urls"].iteritems():
-
-        context[tag] = url["production"]
-
-        if settings.DEBUG:
-
-            context["lib_url_%s" % tag] = url["debug"]
+def restviews_body():
 
     return render_to_string(
-        'restviews/head.html',
-        context
+        "restviews/%s/body.html" % (settings.RESTVIEWS["ui_implementation"])
     )
-
 
 @register.simple_tag()
 def restviews_grid(grid, url, *args, **kwargs):
@@ -102,3 +70,44 @@ def restviews_grid(grid, url, *args, **kwargs):
             "params": json.dumps(configuration, indent=8)
         }
     )
+
+@register.simple_tag()
+def restviews_head():
+
+    # Generate URL context
+
+    context = {
+        "ui": settings.RESTVIEWS["ui_implementation"],
+        "restviews_url_bootstrap": StaticNode.handle_simple(
+            "restviews/js/rvBootstrap.js"
+        ),
+        "restviews_url_model": StaticNode.handle_simple(
+            "restviews/js/rvModel.js"
+        ),
+        "restviews_url_functions": StaticNode.handle_simple(
+            "restviews/js/rvFunctions.js"
+        ),
+        "restviews_url_validators": StaticNode.handle_simple(
+            "restviews/js/rvValidators.js"
+        ),
+        "restviews_url_ko_bindings": StaticNode.handle_simple(
+            "restviews/js/rvKoBindings.js"
+        ),
+        "restviews_url_ui": StaticNode.handle_simple(
+            "restviews/js/ui/%s.js" % (settings.RESTVIEWS["ui_implementation"])
+        )
+    }
+
+    for tag, url in settings.RESTVIEWS["urls"].iteritems():
+
+        context[tag] = url["production"]
+
+        if settings.DEBUG:
+
+            context["lib_url_%s" % tag] = url["debug"]
+
+    return render_to_string(
+        'restviews/head.html',
+        context
+    )
+

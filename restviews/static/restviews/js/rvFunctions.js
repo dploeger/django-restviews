@@ -213,22 +213,13 @@ rv.addGrid = function (params) {
 
     // Handle keyboard navigation for this grid
 
-    var $newItemSelector = $("#rv_newItemSelector");
-
-    if ($newItemSelector.length == 0) {
-
-        rv.createNewItemSelector();
-        $newItemSelector = $("#rv_newItemSelector");
-
-    }
-
     // Add the grid to the "new item" selector
 
     grid.newItemSelector = $(document.createElement('option'))
         .text(grid.newItemLabel)
         .data("rv.gridName", grid.grid);
 
-    $newItemSelector
+    rv.$newItemSelector
         .find("select")
         .append(
             grid.newItemSelector
@@ -291,80 +282,6 @@ rv.clearForm = function (formName, grid) {
 };
 
 /**
- * Create the "New item"-selection modal available through a shortcut
- */
-
-rv.createNewItemSelector = function () {
-
-    // Not yet initialized. Do it!
-
-    var firstOption = $(document.createElement('option'))
-        .text(rv.msg["SelectNewItem"]);
-
-    var newItemSelector = $(document.createElement('div'))
-        .addClass("modal")
-        .attr({
-            "role": "dialog",
-            "id": "rv_newItemSelector"
-        })
-        .append(
-            $(document.createElement('div'))
-                .addClass("modal-dialog")
-                .append(
-                    $(document.createElement('div'))
-                        .addClass("modal-content")
-                        .append(
-                            $(document.createElement('div'))
-                                .addClass("modal-body")
-                                .append(
-                                    $(document.createElement('select'))
-                                        .addClass("form-control")
-                                        .append(
-                                            firstOption
-                                        )
-                                        .on(
-                                            "keydown.esc",
-                                            function (ev) {
-
-                                                $("#rv_newItemSelector")
-                                                    .modal("hide");
-
-                                            }
-                                        )
-                                )
-                        )
-                )
-        );
-
-    $(document.body).append(newItemSelector);
-
-    $("#rv_newItemSelector")
-        .find("select")
-        .on(
-        "change",
-        function (ev) {
-
-            $("#rv_newItemSelector")
-                .modal("hide");
-
-            var selected = $(ev.target).find(":selected");
-
-            var gridName = selected.data("rv.gridName");
-
-            selected.removeAttr("selected");
-
-            if (gridName) {
-
-                rv.showNewItemDialog(gridName);
-
-            }
-
-        }
-    );
-
-};
-
-/**
  * Delete an item
  *
  * @param item Item data to delete
@@ -375,7 +292,7 @@ rv.deleteItem = function (item, grid) {
 
     var model = rv.grids[grid];
 
-    var url = model.url + "/" + item[model.itemId];
+    var url = model.url + "/" + item[model.itemId] + "/";
 
     $.ajax(
         url,
@@ -416,6 +333,24 @@ rv.deleteItem = function (item, grid) {
         }
     );
 
+};
+
+rv.handleNewItemSelector = function (ev) {
+
+    $("#rv_newItemSelector")
+        .modal("hide");
+
+    var selected = $(ev.target).find(":selected");
+
+    var gridName = selected.data("rv.gridName");
+
+    selected.removeAttr("selected");
+
+    if (gridName) {
+
+        rv.showNewItemDialog(gridName);
+
+    }
 
 };
 
@@ -461,10 +396,7 @@ rv.loadPage = function (link) {
 
     link = $(link);
 
-    // Reworked Because of jQuery Bug #14884
-    //var pageToLoad = link.data("page");
-
-    var pageToLoad = parseInt(link[0].getAttribute("data-page"));
+    var pageToLoad = parseInt(link.attr("data-page"));
     var grid = link.data("grid");
 
     if (
@@ -541,30 +473,16 @@ rv.saveForm = function (formName, grid, update) {
         var fieldType = $(inputs[i]).data("rv.type");
         var field = $(inputs[i]).data("rv.field");
 
-        if (
-            (rv.uiImplementation == "bootstrap3") &&
-            ($.inArray(fieldType, ["date", "datetime", "time"]) != -1)
-        ) {
+        if ($.inArray(fieldType, ["date", "datetime", "time"]) != -1) {
 
-            // Work together with bootstrap3-datetimepicker
+            // convert datetime value to supported django model format
 
-            var tmpDate = $("#rv_" + methodTag + fieldType + grid + field)
-                .data("DateTimePicker")
-                .date;
-
-            switch (fieldType) {
-
-                case "date":
-                    value = tmpDate.format("YYYY-MM-DD");
-                    break;
-                case "time":
-                    value = tmpDate.format("HH:mm:ss");
-                    break;
-                case "datetime":
-                    value = tmpDate.format("YYYY-MM-DD HH:mm:ss");
-                    break;
-
-            }
+            value = rv.ui[rv.uiImplementation].convertDateTime(
+                methodTag,
+                fieldType,
+                grid,
+                field
+            );
 
         }
 
@@ -580,7 +498,7 @@ rv.saveForm = function (formName, grid, update) {
     if (update) {
 
         type = "PUT";
-        url += data[rv.grids[grid].itemId];
+        url += data[rv.grids[grid].itemId] + "/";
         $alert = $("#rv_" + grid + "UpdateItemAlert");
         $modal = $("#rv_" + grid + "UpdateItem")
 
@@ -660,7 +578,7 @@ rv.setOrdering = function (ev) {
 rv.showNewItemDialog = function (gridName) {
 
     $("#rv_" + gridName + "NewItem").modal();
-    $("#rv_" + gridName + "NewItem input")[0].focus();
+    $("#rv_" + gridName + "NewItem input[type!='hidden']")[0].focus();
 
 };
 
@@ -683,7 +601,7 @@ rv.showUpdateItemDialog = function (item, gridName) {
     );
 
     $("#rv_" + gridName + "UpdateItem").modal();
-    $("#rv_" + gridName + "UpdateItem input")[0].focus();
+    $("#rv_" + gridName + "UpdateItem input[type!='hidden']")[0].focus();
 
 };
 
@@ -718,11 +636,13 @@ rv.triggerAction = function (trigger) {
 
         if (args[i] == "_item") {
 
-            // Rewrote because auf jQuery-Bug #14884
+            args[i] = JSON.parse(trigger.attr("data-item"));
 
-            // args[i] = trigger.data("item");
+        }
 
-            args[i] = JSON.parse(trigger[0].getAttribute("data-item"));
+        if (args[i] == "_grid") {
+
+            args[i] = trigger.attr("data-grid");
 
         }
 

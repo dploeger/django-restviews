@@ -18,16 +18,22 @@
             {% include "restviews/bootstrap3/pagination.html" %}
         </div>
         <div class="col-sm-1">
-            <span data-bind="if: canCreate">
+            <div class="btn-group btn-group-sm pull-right">
+                <button type="button" class="btn btn-default"
+                        onclick="rv.grids['{{ grid }}'].loadData()">
+                    <span class="glyphicon glyphicon-refresh"></span>
+                </button>
+                <!-- ko if: canCreate -->
                 <button type="button"
                         id="rv_showNewItemDialogButton{{ grid }}"
-                        class="btn btn-primary btn-sm pull-right"
+                        class="btn btn-primary"
                         onclick="rv.showNewItemDialog('{{ grid }}')">
                     <span class="glyphicon glyphicon-plus">
 
                     </span>
                 </button>
-            </span>
+                <!-- /ko -->
+            </div>
         </div>
     </div>
 
@@ -138,7 +144,8 @@
                                 css: addClass,
                                 attr: {
                                     'data-action': action,
-                                    'data-item': ko.toJSON($parent,null,2)
+                                    'data-item': ko.toJSON($parent,null,2),
+                                    'data-grid': '{{ grid }}'
                                 }
                             "
                             onclick="rv.triggerAction(this)">
