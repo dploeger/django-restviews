@@ -21,7 +21,8 @@
  * @property {boolean} canUpdate can the user update objects?
  * @property {boolean} canDelete can the user delete objects?
  * @property {boolean} canView can the user view objects?
- * @property {object} actions available row level actions
+ * @property {Array} actions available row level actions
+ * @property {Array} globalActions available global actions
  * @property {boolean} optionsLoaded has the OPTIONS call been made?
  * @property {String} csrftoken The current CSRF token from the cookies
  * @property {String} itemId field holding the id of the item
@@ -71,6 +72,7 @@ rv.model = function (params) {
     this.canDelete = ko.observable(false);
     this.canView = ko.observable(true);
     this.actions = ko.observableArray();
+    this.globalActions = ko.observableArray();
     this.optionsLoaded = false;
     this.csrftoken = "";
     this.itemId = "";
@@ -255,15 +257,26 @@ rv.model = function (params) {
                 (params[v] != "")
             ) {
 
-                var tmp = params[v].split(":");
+                var tmpAction = [];
 
-                params[v] = {
+                $.each(
+                    params[v].split(","),
+                    function (k2, v2) {
 
-                    "action": tmp[0],
-                    "label": tmp[1],
-                    "addClass": tmp.length >= 3 ? tmp[2] : ""
+                        var tmp = v2.split(":");
 
-                };
+                        tmpAction.push({
+
+                            "action": tmp[0],
+                            "label": tmp[1],
+                            "addClass": tmp.length >= 3 ? tmp[2] : ""
+
+                        });
+
+                    }
+                );
+
+                params[v] = tmpAction;
 
             }
 
@@ -498,11 +511,25 @@ rv.model.prototype.interpretEnvironment = function () {
 
     }
 
+    // Add refresh action
+
+    this.globalActions.push(
+        rv.ui[rv.uiImplementation].getRefreshAction(this.grid)
+    );
+
     // Remove "new item selector" option, if we cannot create an item
 
     if (!this.canCreate()) {
 
         this.newItemSelector.remove();
+
+    } else {
+
+        // Add create action
+
+        this.globalActions.push(
+            rv.ui[rv.uiImplementation].getCreateAction(this.grid)
+        );
 
     }
 

@@ -13,27 +13,66 @@
                        placeholder="{% trans "Search" %}">
             </span>
         </div>
-        <div class="col-sm-3">
+        <div class="col-sm-2">
             {# Include pagination #}
             {% include "restviews/bootstrap3/pagination.html" %}
         </div>
-        <div class="col-sm-1">
-            <div class="btn-group btn-group-sm pull-right">
-                <button type="button" class="btn btn-default"
-                        onclick="rv.grids['{{ grid }}'].loadData()">
-                    <span class="glyphicon glyphicon-refresh"></span>
-                </button>
-                <!-- ko if: canCreate -->
-                <button type="button"
-                        id="rv_showNewItemDialogButton{{ grid }}"
-                        class="btn btn-primary"
-                        onclick="rv.showNewItemDialog('{{ grid }}')">
-                    <span class="glyphicon glyphicon-plus">
+        <div class="col-sm-2">
 
-                    </span>
-                </button>
+            <!-- ko if: globalActions().length <= 3 -->
+
+            <div class="btn-group btn-group-sm pull-right">
+
+                <!-- ko foreach: globalActions() -->
+
+                <button type="button" class="btn"
+                        onclick="rv.triggerAction(this)"
+                        data-bind="
+                                html: label,
+                                css: addClass,
+                                attr: {
+                                    'data-action': action,
+                                    'data-grid': '{{ grid }}'
+                                }
+                            "></button>
+
                 <!-- /ko -->
+
             </div>
+
+            <!-- /ko -->
+
+            <!-- ko if: globalActions().length > 3 -->
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                    {% trans "Actions" %} <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+
+
+                    <!-- ko foreach: globalActions() -->
+
+                    <li>
+                        <a href="#"
+                           onclick="rv.triggerAction(this)"
+                           data-bind="
+                                html: label,
+                                attr: {
+                                    'data-action': action,
+                                    'data-grid': '{{ grid }}'
+                                }
+                            "
+                            ></a>
+                    </li>
+
+                    <!-- /ko -->
+
+                </ul>
+            </div>
+
+            <!-- /ko -->
+
         </div>
     </div>
 

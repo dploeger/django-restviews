@@ -27,12 +27,32 @@ rv.ui["bootstrap3"] = {
 
     },
 
+    "getCreateAction" : function (grid) {
+
+        return {
+            'label': '<span class="glyphicon glyphicon-plus"></span>',
+            'addClass': 'btn-primary',
+            'action': "rv.create." + grid
+        }
+
+    },
+
     "getDeleteAction" : function (grid) {
 
         return {
             'label': '<span class="glyphicon glyphicon-remove"></span>',
             'addClass': 'btn-link',
             'action': "rv.delete." + grid
+        }
+
+    },
+
+    "getRefreshAction" : function (grid) {
+
+        return {
+            'label': '<span class="glyphicon glyphicon-refresh"></span>',
+            'addClass': 'btn-default',
+            'action': "rv.refresh." + grid
         }
 
     },

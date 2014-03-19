@@ -33,6 +33,9 @@ def restviews_grid(grid, url, *args, **kwargs):
         "fieldsCreate": "",
         "fieldsUpdate": "",
 
+        "actions": "",
+        "globalActions": "",
+
         "itemId": "id",
         "newItemLabel": _("New %(item)s") % {
             "item": grid

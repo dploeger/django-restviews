@@ -38,7 +38,7 @@ rv.activateGrids = function () {
             rv.showUpdateItemDialog,
             [
                 "_item",
-                key
+                "_grid"
             ]
         );
 
@@ -47,7 +47,23 @@ rv.activateGrids = function () {
             rv.deleteItem,
             [
                 "_item",
-                key
+                "grid"
+            ]
+        );
+
+        rv.registerAction(
+            "rv.refresh." + key,
+            rv.refresh,
+            [
+                "_grid"
+            ]
+        );
+
+        rv.registerAction(
+            "rv.create." + key,
+            rv.showNewItemDialog,
+            [
+                "_grid"
             ]
         );
 
@@ -439,6 +455,18 @@ rv.loadPage = function (link) {
     rv.grids[grid].loadData();
 
     return true;
+
+};
+
+/**
+ * Refresh the grid's data
+ *
+ * @param grid the grid
+ */
+
+rv.refresh = function (grid) {
+
+    rv.grids[grid].loadData();
 
 };
 
